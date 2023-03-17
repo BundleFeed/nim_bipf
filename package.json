@@ -1,0 +1,25 @@
+{
+  "name": "nim_bipf",
+  "version": "1.0.0",
+  "description": "<!--  Copyright 2023 Geoffrey Picron",
+  "main": "dist/nim_bipf.js",
+  "directories": {
+    "test": "tests-js"
+  },
+  "devDependencies": {
+    "bipf-spec": "^0.1.0",
+    "faker": "^5.5.1",
+    "husky": "^4.3.8",
+    "nyc": "^15.1.0",
+    "prettier": "^2.1.2",
+    "pretty-quick": "^3.1.0",
+    "tap-arc": "~0.3.4",
+    "tape": "^5.3.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "benchmark": "node tests-js/perf.js"
+  },
+  "author": "Geoffrey Picron",
+  "license": "Apache-2.0"
+}
