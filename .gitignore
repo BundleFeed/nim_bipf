@@ -1,3 +1,4 @@
 build
 node_modules
 tests/test1
+src/nim_bipf.out
