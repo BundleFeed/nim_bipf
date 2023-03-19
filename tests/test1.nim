@@ -59,3 +59,20 @@ suite "BIPF":
       check toBin((encoded[0]).int64, 8) == toBin(fixture.binary[0].int64, 8)
       check seq[byte](encoded) == fixture.binary
 
+import std/random
+
+suite "byte buffer":
+  test "varint":
+    var r1 = initRand(123)
+    for i in 0..100:
+      let v = r1.rand(0.uint32..high(uint32))
+
+      var buf = newByteBuffer(5)
+
+      var p = 0
+      buf.writeVaruint32(v, p)
+      var p2 = 0
+      let v2 = buf.readVaruint32(p2)
+
+      check p == p2
+      check v == v2

@@ -61,7 +61,7 @@ function encode(string) {
 console.log('Encoding:' + JSON.stringify(fakeData))
 console.log('Encoded:' + typeof(fakeData))
 
-var b = Buffer.alloc(BIPF.encodingLength(fakeData))
+var b = BIPF.allocAndEncode(fakeData)
 const msgs = []
 var start, json
 var json = JSON.stringify(fakeData)
@@ -72,7 +72,7 @@ var M = 100 // number of messages
 console.log('operation, ops/ms')
 start = Date.now()
 //for (var i = 0; i < N || true; i++) {
-  for (var i = 0; i < N; i++) {
+for (var i = 0; i < N; i++) {
   //not an honest test
   BIPF.allocAndEncode(fakeData)
   if (i < M) {
@@ -93,9 +93,9 @@ for (var i = 0; i < N; i++) {
 }
 console.log('JSON.stringify', N / (Date.now() - start))
 
-/* // ---
+ // ---
 start = Date.now()
-for (var i = 0; i < N; i++) {
+for (var i = 0; i < N ; i++) {
   BIPF.decode(b, 0)
 }
 console.log('BIPF.decode', N / (Date.now() - start))
@@ -105,7 +105,7 @@ for (var i = 0; i < N; i++) {
   JSON.parse(json)
 }
 console.log('JSON.parse', N / (Date.now() - start))
-// ---
+/*// ---
 start = Date.now()
 for (var i = 0; i < N; i++) {
   JSON.parse(buffer)

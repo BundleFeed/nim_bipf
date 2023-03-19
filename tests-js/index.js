@@ -41,6 +41,7 @@ const pkg = {
 function testEncodeDecode(value) {
   tape('encode & decode: ' + JSON.stringify(value), (t) => {
     const buf = Buffer.alloc(bipf.encodingLength(value))
+    buf.fill(0, 0, buf.capacity)
     const len = bipf.encode(value, buf, 0)
     console.log('encoded:', buf.slice(0, len))
     //''+jsonString to get 'undefined' string.
@@ -52,6 +53,7 @@ function testEncodeDecode(value) {
       const rest = buf[0] >> 3
       t.equal(rest, 0, 'single byte encodings must have zero length in tag')
     }
+    
     t.deepEqual(bipf.decode(buf, 0), value)
     t.deepEqual(bipf.decode(buf.slice(0, len), 0), value)
 
@@ -71,7 +73,7 @@ testEncodeDecode(-123.456)
 testEncodeDecode(true)
 testEncodeDecode(false)
 testEncodeDecode(null)
-testEncodeDecode(undefined) // added undefined for compatibility with charwise
+// NOT PART OF THE SPEC testEncodeDecode(undefined) // added undefined for compatibility with charwise
 testEncodeDecode('')
 testEncodeDecode(Buffer.alloc(0))
 testEncodeDecode([])
@@ -111,6 +113,11 @@ tape('seekPath', (t) => {
   const pathBuf = bipf.allocAndEncode(path)
 
   const pkgBuf = bipf.allocAndEncode(pkg)
+
+  console.log("on:", path)
+  console.log("with:",  path)
+  console.log("seekPath:",bipf.seekPath(pkgBuf, 0, pathBuf, 0))
+
 
   t.equal(
     bipf.decode(pkgBuf, bipf.seekPath(pkgBuf, 0, pathBuf, 0)),
