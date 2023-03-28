@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 
 when defined(js):
   import jsffi
   
   type ByteBuffer* = distinct JSObject # JS Uint8Array
+
   type ArrayBuffer = distinct JSObject # JS ArrayBuffer
   type DataView = distinct JSObject # JS DataView
-  type NativeString* = cstring
+
 
   func buffer*(a: ByteBuffer): ArrayBuffer {.importjs: "#.buffer".}
   func byteOffset*(a: ByteBuffer): int {.importjs: "#.byteOffset".}
@@ -32,16 +34,18 @@ when defined(js):
 
   when defined(nodejs):
     func newByteBuffer*(size: int): ByteBuffer {.importjs: "Buffer.allocUnsafe(#)".}
+    func newByteBuffer*(s: cstring): ByteBuffer {.importjs: "Buffer.from(#)".}
   else:
     func newByteBuffer*(size: int): ByteBuffer {.importjs: "new Uint8Array(#)".}
 
   func newByteBuffer(buffer: ArrayBuffer, offset: int, size: int): ByteBuffer {.importjs: "new Uint8Array(@)".}
+
   func len*(v:ByteBuffer): int {.importjs: "#.length".}
   func `[]=`*(v: ByteBuffer, i: int, b: byte) {.importjs: "#[#] = #".}
   func `[]`*(v: ByteBuffer, i: int): byte {.importjs: "#[#]".}
   func `$`*(v: ByteBuffer): string {.importjs: "#.toString()".}
 
-  func set*(bb: ByteBuffer, s: NativeString, p: int) {.importjs: "#.set(#,#);".}
+  
   func set*(bb: ByteBuffer, s: ByteBuffer, p: int) {.importjs: "#.set(#,#);".}
 
   template writeBuffer*(result: ByteBuffer, s: ByteBuffer, p: var int) =
@@ -56,7 +60,7 @@ when defined(js):
       newByteBuffer(0)
     else:
       p+=l
-      newByteBuffer(source.buffer(), p-l, l)
+      newByteBuffer(source.buffer, source.byteOffset + p-l, l)
 
     
   when defined(nodejs):
@@ -87,20 +91,40 @@ when defined(js):
         let result = bufferReadFloat64LittleEndian(source, p)
         p+=8
         result
-    func lenUtf8*(s: NativeString): int {.importjs: "Buffer.byteLength(#)".}
+    #func lenUtf8*(s: NativeString): int {.importjs: "Buffer.byteLength(#)".}
 
-    func bufferWriteUtf8*(result: ByteBuffer, s: NativeString, p: int): int {.importjs: "#.write(#, #)".}
+    func bufferWriteUtf8*(result: ByteBuffer, s: cstring, p: int): int {.importjs: "#.write(#, #)".}
 
-    template writeUTF8*(result: ByteBuffer, s: NativeString, p: var int) =
+    template writeUTF8*(result: ByteBuffer, s: cstring, p: var int) =
+      trace "writeUTF8(cstring) with '", $s, "'", " at ", p
       p += bufferWriteUtf8(result, s, p)
+    
+    func bufferWriteUTF8*(bb: ByteBuffer, s: string, p: int) {.importjs: "#.set(#,#);".}
 
-    func bufferReadUtf8*(source: ByteBuffer, p: int, pend: int): NativeString {.importjs: "#.toString('utf8', #, #)".}
+    template writeUTF8*(result: ByteBuffer, s: string, p: var int) =
+      trace "writeUTF8(string) with '", $s, "'", " at ", p
+      p += s.len
 
-    template readUTF8*(source: ByteBuffer, p: var int, len: int): NativeString =
-      block:
-        let result = bufferReadUtf8(source, p, p+len)
-        p+=len
-        result
+
+    #func bufferReadUtf8*(source: ByteBuffer, p: int, pend: int): NativeString {.importjs: "#.toString('utf8', #, #)".}
+
+    #template readUTF8*(source: ByteBuffer, p: var int, len: int): NativeString =
+    # block:
+    #    let result = bufferReadUtf8(source, p, p+len)
+    #    p+=len
+    #    result
+    
+    func bufferCompare(source: ByteBuffer, target: ByteBuffer, targetStart: int, targetEnd: int, sourceStart: int, sourceEnd: int): int {.importjs: "#.compare(@)".}
+
+    template equals*(source: ByteBuffer, target: ByteBuffer, p: int): bool =
+      bufferCompare(source, target, 0, target.len, p, p+target.len) == 0
+      
+    func compare*(source: ByteBuffer, target: ByteBuffer, targetStart: int, targetLen: int, sourceStart: int, sourceLen: int): int =
+      let len = min(sourceLen, targetLen)
+      result = bufferCompare(source, target, targetStart, targetStart + len, sourceStart, sourceStart + len)
+      if result == 0:
+        result = sourceLen - targetLen
+
   else:
     template writeInt32LittleEndian*(result: ByteBuffer, i: int32, p: var int) =
       newDataView(buffer(result)).setInt32(byteOffset(result) + p, i, true)
@@ -118,44 +142,49 @@ when defined(js):
       result =  newDataView(buffer(source)).getFloat64(byteOffset(source) + p, true)
       p+=8
     
-    func lenUtf8*(s: NativeString): int {.importjs: "new TextEncoder().encode(#).length".} # todo optimize
-    template writeUTF8*(result: ByteBuffer, s: NativeString, p: var int) =
+    func lenUtf8*(s: cstring): int {.importjs: "new TextEncoder().encode(#).length".} # todo optimize
+    template writeUTF8*(result: ByteBuffer, s: cstring, p: var int) =
       writeBuffer(result, cast[ByteBuffer]($s), p)
 
-    template readUtf8*(source: ByteBuffer, p: var int, l: int): NativeString =
+    template readUtf8*(source: ByteBuffer, p: var int, l: int): cstring =
       let utf8String = cast[string](readBuffer(source, p, l))
-      cast[NativeString](utf8String.cstring)    
+      utf8String.cstring    
 
 else:
   import std/endians
 
   type ByteBuffer* = distinct seq[byte]
-  type NativeString* = distinct string    
+
 
   template newByteBuffer*(size: int): ByteBuffer = ByteBuffer(newSeq[byte](size))
-  template len*(v:ByteBuffer): int = (seq[byte](v)).len
+  func newByteBuffer*(s: sink string): ByteBuffer {.inline.} = ByteBuffer(cast[seq[byte]](s))
+  func len*(x: ByteBuffer): int {.borrow.}
   template `[]=`*(v: ByteBuffer, i: int, b: byte) = (seq[byte](v))[i] = b
   template `[]`*(v: ByteBuffer, i: int): byte = (seq[byte](v))[i]
+  template `[]`*(v: ByteBuffer, i: HSlice[system.int, system.int]): byte = (seq[byte](v))[i]
   template `$`*(v: ByteBuffer): string = $(seq[byte](v))
-
-  template lenUtf8*(s: NativeString): int = s.string.len
   
-  template writeUTF8*(result: ByteBuffer, s: NativeString, p: var int) =
-    let l = s.lenUtf8
+  
+  template writeUTF8*(result: ByteBuffer, s: string, p: var int) =
+    let l = s.len
     if unlikely(l == 0):
       discard
     else:
-      copyMem(result[p].addr, unsafeAddr(s.string[0]), l)
+      copyMem(result[p].addr, unsafeAddr(s[0]), l)
       p+=l
+  
+  template writeUTF8*(result: ByteBuffer, s: cstring, p: var int) =
+    let str = $s
+    writeUTF8(result, str, p)
 
-  func readUtf8*(source: ByteBuffer, p: var int, l: int): NativeString {.inline.} =
-    var r = newString(l)
+  func readUtf8*(source: ByteBuffer, p: var int, l: int): string {.noinit, inline.} =
+    result = newString(l)
     if unlikely(l == 0):
       discard
     else:
-      copyMem(addr(r[0]), source[p].unsafeAddr, l)
+      copyMem(addr(result[0]), source[p].unsafeAddr, l)
       p+=l
-    result = NativeString(r)
+    
   
   template writeBuffer*(result: ByteBuffer, s: ByteBuffer, p: var int) =
     let l = s.len
@@ -189,63 +218,19 @@ else:
   func readFloat64LittleEndian*(source: ByteBuffer, p: var int): float64 {.inline.} =
     littleEndian64(addr result, cast[ptr uint64](source[p]))
     p+=8
+  
+  
+  func compare*(source: ByteBuffer, target: ByteBuffer, targetStart: int, targetLen: int, sourceStart: int, sourceLen: int): int {.inline.} =
+    result = cmpMem(source[sourceStart].unsafeAddr, target[targetStart].unsafeAddr, min(sourceLen, targetLen))
+    if result == 0:
+      result = sourceLen - targetLen
 
+  func equals*(source: ByteBuffer, target: ByteBuffer, p: int): bool {.inline.} =
+    trace "equals of ", source.repr, " and ", target.repr, " at ", p
+    if (source.len - p) < target.len:
+      return false
+    for i in 0..<target.len:
+      if source[p+i] != target[i]:
+        return false
+    return true
 
-func writeVaruint32*(buf: var ByteBuffer, v: uint32, p: var int) {.inline.} =
-  if v < 0x80:
-    buf[p] = byte(v)
-    p+=1
-  elif v < 0x4000:
-    buf[p] = byte(v or 0x80)
-    buf[p+1] = byte(v shr 7)
-    p+=2
-  elif v < 0x200000:
-    buf[p] = byte(v or 0x80)
-    buf[p+1] = byte((v shr 7) or 0x80)
-    buf[p+2] = byte(v shr 14)
-    p+=3
-  elif v < 0x10000000:
-    buf[p] = byte(v or 0x80)
-    buf[p+1] = byte((v shr 7) or 0x80)
-    buf[p+2] = byte((v shr 14) or 0x80)
-    buf[p+3] = byte(v shr 21)
-    p+=4
-  else:
-    buf[p] = byte(v or 0x80)
-    buf[p+1] = byte((v shr 7) or 0x80)
-    buf[p+2] = byte((v shr 14) or 0x80)
-    buf[p+3] = byte((v shr 21) or 0x80)
-    buf[p+4] = byte(v shr 28)
-    p+=5
-
-func readVaruint32*(data: ByteBuffer, p: var int): uint32 {.inline.} =
-  result = 0
-  var b: uint8
-  b = data[p]
-  result += uint32(b and 0x7f)
-  p += 1
-
-  if (b and 0x80) == 0: return result
-  b = data[p]
-  result += uint32(b and 0x7f) shl 7
-  p += 1
-  
-  if (b and 0x80) == 0: return result
-  b = data[p]
-  result += uint32(b and 0x7f) shl 14
-  p += 1
-  
-  if (b and 0x80) == 0: return result
-  b = data[p]
-  result += uint32(b and 0x7f) shl 21
-  p += 1
-  
-  if (b and 0x80) == 0: return result
-  b = data[p]
-  result += uint32(b and 0x7f) shl 28
-  p += 1
-  
-  if (b and 0x80) == 0: return result
-  raise newException(Exception, "Malformed Varint")
-  
-      

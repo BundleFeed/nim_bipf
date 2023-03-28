@@ -21,7 +21,8 @@ template wrapSideEffects(debug: bool, body: untyped) {.inject.} =
       when defined(nimHasWarnBareExcept):
         {.push warning[BareExcept]:off.}
       try: body
-      except: discard
+      except Exception:
+        log(lvlError, getCurrentExceptionMsg())
       when defined(nimHasWarnBareExcept):
         {.pop.}
   else:

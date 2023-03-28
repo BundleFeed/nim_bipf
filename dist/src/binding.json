@@ -1,0 +1,152 @@
+{
+  "cacheVersion": "D20210525T193831",
+  "outputFile": "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs/binding",
+  "compile": [
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sstd@sprivate@sdigitsutils.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sstd@sprivate@sdigitsutils.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sstd@sprivate@sdigitsutils.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sassertions.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sassertions.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sassertions.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sdollars.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sdollars.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sdollars.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@srepr_v2.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@srepr_v2.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@srepr_v2.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sio.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sio.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sio.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sparseutils.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sparseutils.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sparseutils.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@smath.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@smath.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@smath.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sunicode.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sunicode.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sunicode.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sstrutils.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sstrutils.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sstrutils.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@spathnorm.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@spathnorm.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@spathnorm.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sposix@sposix.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sposix@sposix.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sposix@sposix.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@stimes.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@stimes.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@stimes.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sos.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sos.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sos.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sjsNativeApiTypes.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sjsNativeApiTypes.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sjsNativeApiTypes.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sutils.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sutils.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sutils.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@snapi.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@snapi.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@snapi.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@slogging.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@slogging.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@slogging.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sbytebuffer.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sbytebuffer.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sbytebuffer.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@scommon.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@scommon.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@scommon.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbuilder.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbuilder.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbuilder.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@sjsony-1.1.5@sjsony.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@sjsony-1.1.5@sjsony.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@sjsony-1.1.5@sjsony.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sserde_json.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sserde_json.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sserde_json.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sdeser.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sdeser.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sdeser.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbpath.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbpath.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbpath.nim.c"
+    ],
+    [
+      "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@mbinding.nim.c",
+      "clang -c  -w -ferror-limit=3 -ffast-math -flto -O3   -I/Users/gpicron/.choosenim/toolchains/nim-1.6.12/lib -I/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@mbinding.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@mbinding.nim.c"
+    ]
+  ],
+  "link": [
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sstd@sprivate@sdigitsutils.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sassertions.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sdollars.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@srepr_v2.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sio.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sparseutils.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@smath.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sunicode.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sstrutils.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@spathnorm.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sposix@sposix.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@stimes.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sos.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sjsNativeApiTypes.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sutils.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@snapi.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@slogging.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sbytebuffer.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@scommon.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbuilder.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@sjsony-1.1.5@sjsony.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sserde_json.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sdeser.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbpath.nim.c.o",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@mbinding.nim.c.o"
+  ],
+  "linkcmd": "clang   -o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/src/js/nodejs/binding /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sstd@sprivate@sdigitsutils.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sassertions.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sdollars.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@srepr_v2.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem@sio.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@ssystem.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sparseutils.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@smath.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sunicode.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sstrutils.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@spathnorm.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@sposix@sposix.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@stimes.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@sos.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sjsNativeApiTypes.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@sutils.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@snode_binding-0.1.0@snode_binding@snapi.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.choosenim@stoolchains@snim-1.6.12@slib@spure@slogging.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sbytebuffer.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@scommon.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbuilder.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@s..@s..@s..@s..@s..@s..@s..@s.nimble@spkgs@sjsony-1.1.5@sjsony.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sserde_json.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sprivate@sdeser.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@m..@s..@snim_bipf@sbpath.nim.c.o /Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/dist/src/@mbinding.nim.c.o  -lm -lm  -flto  -ldl",
+  "extraCmds": [],
+  "configFiles": [
+    "/Users/gpicron/.choosenim/toolchains/nim-1.6.12/config/nim.cfg",
+    "/Users/gpicron/.choosenim/toolchains/nim-1.6.12/config/config.nims",
+    "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf/nim.cfg"
+  ],
+  "stdinInput": false,
+  "projectIsCmd": false,
+  "cmdInput": "",
+  "currentDir": "/Users/gpicron/Documents/arboratum/projects/ssb2/BPChain/nim_bipf",
+  "cmdline": "",
+  "depfiles": [],
+  "nimexe": ""
+}

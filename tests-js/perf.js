@@ -66,7 +66,7 @@ const msgs = []
 var start, json
 var json = JSON.stringify(fakeData)
 var buffer = Buffer.from(JSON.stringify(fakeData))
-var N = 10000
+var N = 30000
 var M = 100 // number of messages
 
 console.log('operation, ops/ms')
@@ -105,7 +105,7 @@ for (var i = 0; i < N; i++) {
   JSON.parse(json)
 }
 console.log('JSON.parse', N / (Date.now() - start))
-/*// ---
+// ---
 start = Date.now()
 for (var i = 0; i < N; i++) {
   JSON.parse(buffer)
@@ -118,8 +118,7 @@ for (var i = 0; i < N; i++) {
 }
 console.log('JSON.stringify(JSON.parse())', N / (Date.now() - start))
 
-var b = Buffer.alloc(BIPF.encodingLength(pkg))
-BIPF.encode(pkg, b, 0)
+var b = BIPF.serialize(pkg)
 
 // ---
 start = Date.now()
@@ -177,7 +176,7 @@ console.log('BIPF.seekCached(buffer)', N / (Date.now() - start))
 start = Date.now()
 var path = encode(['dependencies', 'varint'])
 for (var i = 0; i < N; i++) {
-  var c, d
+  var c = 0, d = 0
   BIPF.decode(b, (d = BIPF.seekPath(b, c, path)))
 }
 console.log('BIPF.seekPath(encoded)', N / (Date.now() - start))
@@ -233,4 +232,3 @@ for (var i = 0; i < N; i++) {
 }
 console.log('BIPF.seekCached(uniqueMsg)', N / (Date.now() - start))
 // ---
- */

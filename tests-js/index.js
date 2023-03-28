@@ -152,7 +152,7 @@ tape('error: seekPath on a non-array path', (t) => {
 })
 
 tape('error: encode(NaN)', (t) => {
-  t.throws(() => bipf.encode(NaN), /unknown type/)
+  t.throws(() => bipf.encode(NaN, Buffer.alloc(10)), /unknown type/)
   t.end()
 })
 
@@ -351,7 +351,7 @@ tape('getEncodedLength()', (t) => {
 tape('getEncodedType()', (t) => {
   const trueEncoded = bipf.allocAndEncode(true)
   const nullEncoded = bipf.allocAndEncode(null)
-  const undefinedEncoded = bipf.allocAndEncode(undefined)
+  //const undefinedEncoded = bipf.allocAndEncode(undefined) // [DEVIATION FROM JS IMPL] undefined is not encoded
   const stringEncoded = bipf.allocAndEncode('foo')
   const intEncoded = bipf.allocAndEncode(42)
   const doubleEncoded = bipf.allocAndEncode(3.1415)
@@ -361,7 +361,7 @@ tape('getEncodedType()', (t) => {
 
   t.equals(bipf.getEncodedType(trueEncoded), bipf.types.boolnull)
   t.equals(bipf.getEncodedType(nullEncoded), bipf.types.boolnull)
-  t.equals(bipf.getEncodedType(undefinedEncoded), bipf.types.boolnull)
+  //t.equals(bipf.getEncodedType(undefinedEncoded), bipf.types.boolnull) // [DEVIATION FROM JS IMPL] undefined is not encoded
   t.equals(bipf.getEncodedType(stringEncoded), bipf.types.string)
   t.equals(bipf.getEncodedType(intEncoded), bipf.types.int)
   t.equals(bipf.getEncodedType(doubleEncoded), bipf.types.double)
@@ -381,6 +381,8 @@ function bufferFromBinary(str) {
   }
   return buf
 }
+/*
+  [DEVIATION FROM JS IMPL] RESERVED TYPE is not faulty, but it is not used yet
 
 tape('error: decode array with bad item: reserved type', (t) => {
   //                                  len   type    len   type
@@ -396,6 +398,7 @@ tape('error: decode array with bad item: reserved type', (t) => {
 
   t.end()
 })
+
 
 tape('error: decode object with bad value: reserved type', (t) => {
   const faultyBuf = bufferFromBinary(
@@ -413,6 +416,7 @@ tape('error: decode object with bad value: reserved type', (t) => {
 
   t.end()
 })
+*/
 
 tape('error: decode object with bad key: boolnull', (t) => {
   const faultyBuf = bufferFromBinary(
@@ -465,6 +469,9 @@ tape('error: decode bad length for boolnull', (t) => {
   t.end()
 })
 
+/*
+  [DEVIATION FROM JS IMPL] RESERVED TYPE is not faulty, but it is not used yet
+  
 tape('error: decode reserved', (t) => {
   const buf = bipf.allocAndEncode(null)
   buf[0] = 0x7f
@@ -479,6 +486,7 @@ tape('error: decode reserved', (t) => {
 
   t.end()
 })
+ */
 
 tape('error: symbols cannot be encoded', (t) => {
   t.throws(() => {
