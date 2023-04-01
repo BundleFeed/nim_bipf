@@ -17,7 +17,7 @@ var faker = require('faker')
 var nim_bipf = require('../')
 var bipf = require('bipf')
 var fs = require('fs')
-var nim_bipf_node = require('../dist/index.js')
+var nim_bipf_node = require('../dist/nim_bipf_node.js')
 
 
 
@@ -110,6 +110,12 @@ var fixtureMessages = fs.readFileSync('tests-js/test-bench-fixture.json', 'utf8'
 
 console.log('fixtureMessages length:', fixtureMessages.length)
 
+var keyDict = nim_bipf.newKeyDict()
+
+
+console.log('fixtureMessages (500 authors) of ' + fixtureMessages.length + ' messages')
+var encodedSsbMessages = fixtureMessages.map(msg => bipf.allocAndEncode(msg))
+
 
 var b = bipf.allocAndEncode(fakeData)
 var json = JSON.stringify(fakeData)
@@ -187,12 +193,14 @@ const bench = new Benchmarkify("Nim Bipf - JS Backend").printHeader();
 var suites = []
 
 let data = {}
-data["large data"] = [...Array(100).keys()].map(i => buildStructure(0)).filter(i => i != null)
-data["medium data"] = [...Array(100).keys()].map(i => buildStructure(1))
-data["small data (always same)"] = [pkg]
+//data["large data"] = [...Array(100).keys()].map(i => buildStructure(0)).filter(i => i != null)
+//data["medium data"] = [...Array(100).keys()].map(i => buildStructure(1))
+//data["small data (always same)"] = [pkg]
 var ssbMessages = arjMessages.concat(celMessages).concat(andreMessages)
 data["ssb messages from arj,cel,andre"] = ssbMessages
 data["ssb messages from ssb-fixture"] = fixtureMessages
+
+console.log('ssbMessages sample of ' + ssbMessages.length + ' messages')
 
 function roughSizeOfObject( object ) {
 
@@ -231,11 +239,6 @@ function roughSizeOfObject( object ) {
     return recurse( object );
 }
 
-
-console.log('ssbMessages sample of ' + ssbMessages.length + ' messages')
-console.log('fixtureMessages (500 authors) of ' + fixtureMessages.length + ' messages')
-var encodedSsbMessages = fixtureMessages.map(msg => bipf.allocAndEncode(msg))
-
 var dataIndex = 0
 
 for (let i in data) {
@@ -252,6 +255,10 @@ for (let i in data) {
     suite.add('nim_bipf#serialize/' + i, function () {
         let j = dataIndex++ % b.length
         nim_bipf.serialize(b[j])
+    })
+    suite.add('nim_bipf#serializeWithKeyDict/' + i, function () {
+        let j = dataIndex++ % b.length
+        nim_bipf.serialize(b[j], keyDict)
     })
     suite.add('nim_bipf_node#serialize/' + i, function () {
         let j = dataIndex++ % b.length
@@ -273,6 +280,11 @@ for (let i in data) {
     bipfData[i] = data[i].map(e => nim_bipf.serialize(e))
 }
 
+let bipfDataWithKeyDict = {}
+for (let i in data) {
+    bipfDataWithKeyDict[i] = data[i].map(e => nim_bipf.serialize(e, keyDict))
+}
+
 let jsonStrings = {}
 for (let i in data) {
     jsonStrings[i] = data[i].map(e => JSON.stringify(e))
@@ -285,8 +297,10 @@ for (let i in data) {
 
 for (let i in bipfData) {
     let b = bipfData[i]
+    let bk = bipfDataWithKeyDict[i]
     let json = jsonStrings[i]
     let jb = jsonBuffers[i]
+
 
     var suite = bench.createSuite("Decoding data " + i + "");
     suite.setup(function () {
@@ -300,6 +314,10 @@ for (let i in bipfData) {
     suite.add('nim_bipf#deserialize/' + i, function () {
         let j = dataIndex++ % b.length
         nim_bipf.deserialize(b[j])
+    })
+    suite.add('nim_bipf#deserializeWithKeyDict/' + i, function () {
+        let j = dataIndex++ % b.length
+        nim_bipf.deserialize(bk[j], keyDict)
     })
     suite.add('nim_bipf_node#deserialize/' + i, function () {
         let j = dataIndex++ % b.length

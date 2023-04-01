@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import std/json, common, builder
+import private/backend/c
 
 
-func dnKind(n: JsonNode): DynNodeKind  =
+func dnKind*(n: JsonNode): DynNodeKind  =
   case n.kind
   of JNull: nkNull
   of JBool: nkBool
@@ -33,23 +34,23 @@ func dnKind(n: JsonNode): DynNodeKind  =
   of JArray: nkArray
   of JObject: nkMap
 
-converter toInt(n: JsonNode): int32             = n.getInt.int32
-converter toDouble(n: JsonNode): float64        = n.getFloat
-converter toString(n: JsonNode): string         = n.getStr
-converter toBool(n: JsonNode): bool             = n.getBool 
-converter toBuffer(n: JsonNode): ByteBuffer     = raise newException(BipfValueError, "Cannot convert JsonNode to ByteBuffer")
-converter toBipfBuffer(n: JsonNode): BipfBuffer = raise newException(BipfValueError, "Cannot convert JsonNode to BipfBuffer")
+converter toInt32*(n: JsonNode): int32             = n.getInt.int32
+converter toDouble*(n: JsonNode): float64        = n.getFloat
+converter toString*(n: JsonNode): string         = n.getStr
+converter toBool*(n: JsonNode): bool             = n.getBool 
+converter toInputBuffer*(n: JsonNode): ByteBuffer     = raise newException(BipfValueError, "Cannot convert JsonNode to ByteBuffer")
+converter toBipfBuffer*(n: JsonNode): BipfBuffer[ByteBuffer] = raise newException(BipfValueError, "Cannot convert JsonNode to BipfBuffer")
+converter toAtom*(n: JsonNode): AtomValue             = raise newException(BipfValueError, "Cannot convert JsonNode to Atom")
 
-
-template dnItems(n: JsonNode): JsonNode = n.items
-iterator dnPairs(n: JsonNode): (string, JsonNode) = 
+template dnItems*(n: JsonNode): JsonNode = n.items
+iterator dnPairs*(n: JsonNode): (string, JsonNode) = 
   for k, v in n.pairs:
     yield (k, v)
 
-proc addJsonNode*(b: var BipfBuilder, key: sink string, node: sink JsonNode) {.inline.} =
+proc addJsonNode*(b: var BipfBuilder, key: sink string, node: JsonNode) {.inline.} =
   addNodeWithKey(b, key, node)
 
-proc addJsonNode*(b: var BipfBuilder, node: sink JsonNode) {.inline.} =
+proc addJsonNode*(b: var BipfBuilder, node: JsonNode) {.inline.} =
   addNode(b, node)
 
 
@@ -59,11 +60,11 @@ import jsony
 import std/strutils
 
 type 
-  NonKeyedNodeContext = object
-    b: BipfBuilder
+  NonKeyedNodeContext[Builder: BipfBuilder] = object
+    b: Builder
   
-  KeyedNodeContext = object
-    b: BipfBuilder
+  KeyedNodeContext[Builder: BipfBuilder] = object
+    b: Builder
     key: string
   
   NodeContext = KeyedNodeContext | NonKeyedNodeContext   

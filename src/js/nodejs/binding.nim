@@ -39,6 +39,7 @@ converter toBuffer(n: napi_value): ByteBuffer    {.inline.} =
   result = ByteBuffer(newSeq[byte](length))
   let target = addr seq[byte](result)[0]
   copyMem(target, data, length)
+converter toAtom(n: napi_value): AtomValue       {.inline.} = raise newException(ValueError, "not implemented")
 
 
 converter toBipfBuffer(n: napi_value): BipfBuffer {.inline.} = cast[BipfBuffer](n)
@@ -88,15 +89,18 @@ proc dnKind(obj: napi_value): DynNodeKind {.inline.} =
     
     
 proc addNapiValue*(b: var BipfBuilder, key: sink string, node: sink napi_value) {.inline.} =
-  addNodeWithKey(b, key, node)
+  addNodeWithKey(b, key, node, NOKEYDICT)
 
 proc addNapiValue*(b: var BipfBuilder, node: sink napi_value) {.inline.} =
-  addNode(b, node)
+  addNode(b, node, string, NOKEYDICT)
 
 # Napi helper for decoding Bipf
 
 type 
   JsObjectFactory = napi_env
+template bufferType(ctx: JsObjectFactory): typedesc = NapiBuffer
+template nodeType(ctx: JsObjectFactory): typedesc = napi_value
+  
 
 template newMap(factory: JsObjectFactory): napi_value = factory.createObject()
 template newArray(factory: JsObjectFactory, arr: sink seq[napi_value]): napi_value = factory.create(arr)
@@ -130,20 +134,21 @@ template readDoubleNode*(factory: JsObjectFactory, source: NapiBuffer, p: var in
   p += l
   factory.create(d)
 
-template readBoolNullNode*(factory: JsObjectFactory, source: NapiBuffer, p: var int, l: int): napi_value =
+template readAtomNode*(factory: JsObjectFactory, source: NapiBuffer, p: var int, l: int): napi_value =
   if (l == 0):
     factory.getNull()
   elif (l == 1):
     let pByte = source.address(p)
     inc p
-    factory.create((cast[ptr byte](pByte)[] == 1))
+    case cast[ptr byte](pByte)[]
+    of 0: factory.create(false)
+    of 1: factory.create(true)
+    else: raise newException(ValueError, "invalid bool null node (formelly 'invalid boolnull, length must = 1')")
   else:
     raise newException(ValueError, "invalid bool null node (formelly 'invalid boolnull, length must = 1')")
 
 func equals(a: NapiBuffer, b: string, p: int): bool =
-  trace "equals(a: NapiBuffer, b: string, p: int) ", a.repr, " ", b.repr, " ", $p
   if a.len - p < b.len:
-    trace "too short"
     return false
   for i in 0 ..< b.len:
     if a[p + i] != byte(b[i]):
@@ -161,7 +166,7 @@ func equals(a: openArray[byte], b: string, p: int): bool =
   
   
 proc deserialize(factory: var JsObjectFactory, buffer: NapiBuffer, start: int): napi_value =
-  deserialize[JsObjectFactory, napi_value, NapiBuffer](factory, buffer, start)
+  deserialize[JsObjectFactory](factory, buffer, start)
 
 
 

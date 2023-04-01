@@ -14,13 +14,14 @@ addHandler(consoleLog)
 import unittest
 
 import nim_bipf/private/backend/c
+
+
 import nim_bipf/common
 import nim_bipf/builder
 import nim_bipf/serde_json
 
 import std/json
 import stew/byteutils
-import std/strutils
 
 
 let fixtures = parseFile("tests/spec-fixtures.json")
@@ -45,19 +46,52 @@ for e in fixtures.elems:
   ))
 
 
+
+
 suite "BIPF":
   test "encode fixtures":
     for fixture in tests:
-      var builder = newBipfBuilder()
-      check builder != nil
+        debug "encoding fixture: ", fixture.name
+        var builder = newBipfBuilder[NimContext](DEFAULT_CONTEXT)
+        check builder != nil
 
-      debug "encoding fixture: ", fixture.repr
+        builder.addJsonNode(fixture.json)
 
-      builder.addJsonNode(fixture.json)
-      
-      let encoded = builder.finish()
-      
-      let len = encoded.len
+        var encoded = newByteBuffer(builder.encodingSize)
+        builder.finish(encoded)
+        
+        let len = encoded.len
 
-      check len == fixture.binary.len      
-      check seq[byte](encoded) == fixture.binary
+        check len == fixture.binary.len              
+        check seq[byte](encoded) == fixture.binary
+
+  test "atom demo":
+    var builder = newBipfBuilder[NimContext](DEFAULT_CONTEXT)
+    check builder != nil
+
+    builder.startMap()
+    builder.addString("key1", "Foo")
+    builder.addString("key2", "Bar")
+    builder.endMap()
+
+    var encoded = newByteBuffer(builder.encodingSize)
+    builder.finish(encoded)
+
+
+    debug "encoded without keyDict: ", encoded.repr
+    debug "length: ", encoded.len
+
+    var builder2 = newBipfBuilder[NimContext](DEFAULT_CONTEXT)
+    check builder2 != nil
+
+    builder2.startMap()
+    builder2.addString(AtomValue(3), "Foo")
+    builder2.addString(AtomValue(4), "Bar")
+    builder2.endMap()
+
+    var encoded2 = newByteBuffer(builder.encodingSize)
+    builder2.finish(encoded2)
+
+    debug "encoded using a keyDict: ", encoded2.repr
+    debug "length: ", encoded2.len
+

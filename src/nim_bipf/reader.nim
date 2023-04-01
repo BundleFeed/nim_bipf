@@ -15,6 +15,7 @@
 import common
 import private/bytebuffer
 import private/varint
+import std/options
 
 converter asByteBuffer*(b: BipfBuffer): ByteBuffer =
   ByteBuffer(b)
@@ -35,36 +36,25 @@ func readIntValue*(buffer: ByteBuffer, p: var int, size: int): int32 {.inline.} 
 func readFloatValue*(buffer: ByteBuffer, p: var int, size: int): float64 {.inline.} =
   readFloat64LittleEndian(buffer, p)
 
-func readBoolNullValue*(buffer: ByteBuffer, p: var int, size: int): BoolNullValue =
+func readAtomValue*(buffer: ByteBuffer, p: var int, size: int): Option[AtomValue] =
   if size == 0:
-    result = NULL
+    result = none(AtomValue)
   elif size == 1:
     let v = buffer[p]
     inc(p)
     case v:
       of 0:
-        result = FALSE
+        result = some(FALSE)
       of 1:
-        result = TRUE
+        result = some(TRUE)
       else:
         raise newException(BipfValueError, "Invalid bool value (formely 'invalid boolnull'): " & $v)
   else:
     raise newException(BipfValueError, "Invalid bool value size (formely 'invalid boolnull, length must = 1'): " & $size)
 
-#[ 
-template eatString*[Bi](buffer: Bi, p: var int): NativeString =
-  ## Reads prefix, check if String and read a string from the buffer.
-  block:
-    let prefix = buffer.readPrefix(p)
-
-    assert prefix.tag == BipfTag.STRING, "Expected string, got [formely 'required type:string']: " 
-
-    readStringValue(buffer, p, prefix.size)
- ]#
 
 
-
-const NULL_PREFIX = BipfPrefix(BipfTag.BOOLNULL)
+const NULL_PREFIX = BipfPrefix(BipfTag.ATOM)
 
 func compare*(b1: BipfBuffer, b2: BipfBuffer, start1: int = 0, start2: int = 0) : int =
   # undefined is larger than anything

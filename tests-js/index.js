@@ -434,7 +434,8 @@ tape('error: decode object with bad key: boolnull', (t) => {
 
   t.end()
 })
-
+// [DEVIATION FROM JS IMPL] Atoms type extension
+/*
 tape('error: decode bad boolnull', (t) => {
   const faultyBuf = bufferFromBinary(
     // len type    number 4
@@ -468,6 +469,7 @@ tape('error: decode bad length for boolnull', (t) => {
 
   t.end()
 })
+*/
 
 /*
   [DEVIATION FROM JS IMPL] RESERVED TYPE is not faulty, but it is not used yet

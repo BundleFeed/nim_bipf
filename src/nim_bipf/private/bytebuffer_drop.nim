@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
+import std/hashes
 
 when defined(js):
   import jsffi
@@ -44,7 +44,13 @@ when defined(js):
   func `[]=`*(v: ByteBuffer, i: int, b: byte) {.importjs: "#[#] = #".}
   func `[]`*(v: ByteBuffer, i: int): byte {.importjs: "#[#]".}
   func `$`*(v: ByteBuffer): string {.importjs: "#.toString()".}
-
+  func `==`*(a, b: ByteBuffer): bool {.importjs: "#.equals(#)".}
+  template hash*(v: ByteBuffer): Hash =
+    var h : Hash = 0
+    for i in 0..<v.len:
+      h = h !& hash(v[i])
+    !$h
+    
   
   func set*(bb: ByteBuffer, s: ByteBuffer, p: int) {.importjs: "#.set(#,#);".}
 
@@ -66,9 +72,31 @@ when defined(js):
   when defined(nodejs):
     func bufferWriteInt32LittleEndian*(result: ByteBuffer, i: int32, p: int) {.importjs: "#.writeInt32LE(#, #)".}
 
+    func bufferWriteUInt16LittleEndian*(result: ByteBuffer, i: uint16, p: int) {.importjs: "#.writeUInt16LE(#, #)".}
+    func bufferWriteUInt32LittleEndian*(result: ByteBuffer, i: uint32, p: int) {.importjs: "#.writeUInt32LE(#, #)".}
+    
+
     template writeInt32LittleEndian*(result: ByteBuffer, i: int32, p: var int) =
       bufferWriteInt32LittleEndian(result, i, p)
       p+=4
+
+    template writeUInt32LittleEndianTrim*(result: ByteBuffer, i: uint32, p: var int) =
+      if i <= 255:
+        result[p] = byte(i)
+        p+=1
+      elif i <= 65535:
+        bufferWriteUInt16LittleEndian(result, i.uint16, p)
+        p+=2
+      elif i <= 16777215:
+        result[p] = byte(i shr 16)
+        result[p+1] = byte(i shr 8)
+        result[p+2] = byte(i)
+        p+=3
+      else:
+        bufferWriteUInt32LittleEndian(result, i, p)
+        p+=4
+
+
 
     func bufferWriteFloat64LittleEndian*(result: ByteBuffer, d: float64, p: int) {.importjs: "#.writeDoubleLE(#, #)".}
 
@@ -153,6 +181,7 @@ when defined(js):
 else:
   import std/endians
 
+
   type ByteBuffer* = distinct seq[byte]
 
 
@@ -163,7 +192,8 @@ else:
   template `[]`*(v: ByteBuffer, i: int): byte = (seq[byte](v))[i]
   template `[]`*(v: ByteBuffer, i: HSlice[system.int, system.int]): byte = (seq[byte](v))[i]
   template `$`*(v: ByteBuffer): string = $(seq[byte](v))
-  
+  template hash*(buffer: ByteBuffer): Hash = hash(seq[byte](buffer))
+  template `==`*(a, b: ByteBuffer): bool = seq[byte](a) == seq[byte](b)
   
   template writeUTF8*(result: ByteBuffer, s: string, p: var int) =
     let l = s.len
@@ -186,7 +216,7 @@ else:
       p+=l
     
   
-  template writeBuffer*(result: ByteBuffer, s: ByteBuffer, p: var int) =
+  template copyBuffer*(result: var ByteBuffer, s: ByteBuffer, p: var int) =
     let l = s.len
     if unlikely(l == 0):
       discard
@@ -202,14 +232,33 @@ else:
       copyMem(result[0].unsafeAddr, source[p].unsafeAddr, l)
       p+=l
 
-
   template writeInt32LittleEndian*(result: ByteBuffer, i: int32, p: var int) =
     littleEndian32(cast[ptr uint32](result[p].addr), unsafeAddr i)
     p+=4
 
+  func writeUInt32LittleEndianTrim*(result: var ByteBuffer, i: uint32, p: var int) =
+    var v = i
+    if i <= 255:
+      result[p] = byte(v)
+      p+=1
+    elif i <= 65535:
+      littleEndian16(cast[ptr uint16](result[p].addr), v.addr)
+      p+=2
+    elif i <= 16777215:
+      result[p] = byte(v shr 16)
+      result[p+1] = byte(v shr 8)
+      result[p+2] = byte(v)
+      p+=3
+    else:
+      let i: int = p
+      littleEndian32(cast[ptr uint32](result[i].addr), v.addr)
+      p+=4
+
+
   template writeFloat64LittleEndian*(result: ByteBuffer, d: float64, p: var int) =
     littleEndian64(cast[ptr uint64](result[p].addr), unsafeAddr d)
     p+=8
+
 
   func readInt32LittleEndian*(source: ByteBuffer, p: var int): int32 {.inline.} =
     littleEndian32(addr result, cast[ptr uint32](source[p]))
@@ -226,11 +275,11 @@ else:
       result = sourceLen - targetLen
 
   func equals*(source: ByteBuffer, target: ByteBuffer, p: int): bool {.inline.} =
-    trace "equals of ", source.repr, " and ", target.repr, " at ", p
     if (source.len - p) < target.len:
       return false
     for i in 0..<target.len:
       if source[p+i] != target[i]:
         return false
     return true
+
 

@@ -11,126 +11,66 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+{.push overflow_checks:off.}  
 import ../common
-
-
+import std/options
 
 ## Deserialization algorithm
+proc deserializeMap[Ctx](ctx: var Ctx, buffer: ctx.bufferType, p: var int, size: int): ctx.nodeType
+proc deserializeArray[Ctx](ctx: var Ctx, buffer: ctx.bufferType, p: var int, size: int): ctx.nodeType
 
-proc deserializeNext[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, p: var int): DynNode
+template deserializeNext[Ctx](ctx: var Ctx, buffer: ctx.bufferType, p: var int): auto =
+  let prefix = buffer.readPrefix(p)
+  let size = prefix.size
+  let tag = prefix.tag
 
-template deserializeMap[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, p: var int, size: int): DynNode =
-  var result = factory.newMap()
+  case tag
+          of BipfTag.STRING:   ctx.readStringNode(buffer, p, size)
+          of BipfTag.BUFFER:   ctx.readBufferNode(buffer, p, size)
+          of BipfTag.INT:      ctx.readIntNode(buffer, p, size)
+          of BipfTag.DOUBLE:   ctx.readDoubleNode(buffer, p, size)
+          of BipfTag.ARRAY:    deserializeArray[Ctx](ctx, buffer, p, size)
+          of BipfTag.OBJECT:   deserializeMap[Ctx](ctx, buffer, p, size)
+          of BipfTag.ATOM:     ctx.readAtomNode(buffer, p, size)
+          of BipfTag.EXTENDED: ctx.readBufferNode(buffer, p, size)
+  
+
+proc deserializeMap[Ctx](ctx: var Ctx, buffer: ctx.bufferType, p: var int, size: int): ctx.nodeType =
+  result = ctx.newMap()
   let endOffset = p + size
   while p < endOffset:
     let prefix = buffer.readPrefix(p)
-    assert prefix.tag == BipfTag.STRING, "Expected string, got [formely 'required type:string']: " 
+    when not compiles(ctx.keyFor(AtomValue(0))):
+      assert prefix.tag == BipfTag.STRING, "Expected string, got [formely 'required type:string']: " 
 
-    let key = factory.readStringNode(buffer, p, prefix.size)
-    let value = deserializeNext[Factory, DynNode, BipfBuffer](factory, buffer, p)
-    factory.setEntry(result, key, value)
-  result
+      let key = ctx.readStringNode(buffer, p, prefix.size)
+    else:
+      let key = case prefix.tag
+        of BipfTag.STRING:
+          ctx.readStringNode(buffer, p, prefix.size)
+        of BipfTag.ATOM:
+          let atom =ctx.readAtomValue(buffer, p, prefix.size)
+          if atom.int <= 1:
+            raise newException(BipfValueError, "boolean is invalid key, got [formely 'required type:string']: " & $prefix.tag)
+          else:
+            ctx.keyFor(atom)
+        else:
+          raise newException(BipfValueError, "Expected string or atom, got [formely 'required type:string']: " & $prefix.tag)
+    let value = deserializeNext[Ctx, BipfBuffer](ctx, buffer, p)
+    ctx.setEntry(result, key, value)
 
-template deserializeArray[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, p: var int, size: int): DynNode =
-  var stack : seq[DynNode] = @[]
+
+proc deserializeArray[Ctx](ctx: var Ctx, buffer: ctx.bufferType, p: var int, size: int): ctx.nodeType =
+  var stack = newSeq[type(result)]()
   let endOffset = p + size
   while p < endOffset:
-    stack.add(deserializeNext[Factory, DynNode, BipfBuffer](factory, buffer, p))
-  factory.newArray(stack)
-
-proc deserializeNext[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, p: var int): DynNode =
-  let prefix = buffer.readPrefix(p)
-  let size = prefix.size
-  let tag = prefix.tag
-
-  result = case tag
-          of BipfTag.STRING:   factory.readStringNode(buffer, p, size)
-          of BipfTag.BUFFER:   factory.readBufferNode(buffer, p, size)
-          of BipfTag.INT:      factory.readIntNode(buffer, p, size)
-          of BipfTag.DOUBLE:   factory.readDoubleNode(buffer, p, size)
-          of BipfTag.ARRAY:    deserializeArray[Factory, DynNode, BipfBuffer](factory, buffer, p, size)
-          of BipfTag.OBJECT:   deserializeMap[Factory, DynNode, BipfBuffer](factory, buffer, p, size)
-          of BipfTag.BOOLNULL: factory.readBoolNullNode(buffer, p, size)
-          of BipfTag.EXTENDED: factory.readBufferNode(buffer, p, size)
+    stack.add(deserializeNext[Ctx](ctx, buffer, p))
+  return ctx.newArray(stack)
 
 
 
-proc deserialize*[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, at: int = 0): DynNode {.inline.} =
+proc deserialize*[Ctx](ctx: var Ctx, buffer: ctx.bufferType, at: int = 0): ctx.nodeType {.inline.} =
   var p = at
-  result = deserializeNext[Factory, DynNode, BipfBuffer](factory, buffer, p)
+  result = deserializeNext[Ctx](ctx, buffer, p)
 
-
-
-proc parseHookMap[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, p: var int, k: DynNode, parentMap: var DynNode)
-
-proc parseHookArray[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, p: var int, stack: var seq[DynNode]) =
-  let prefix = buffer.readPrefix(p)
-  let size = prefix.size
-  let tag = prefix.tag
-
-  case tag
-  of BipfTag.STRING: stack.add(factory.readStringNode(buffer, p, size))
-  of BipfTag.BUFFER: stack.add(factory.readBufferNode(buffer, p, size))
-  of BipfTag.INT:   stack.add(factory.readIntNode(buffer, p, size))
-  of BipfTag.DOUBLE: stack.add(factory.readDoubleNode(buffer, p, size))
-  of BipfTag.ARRAY:
-    var childs = newSeq[DynNode]()
-    let endOffset = p + size
-    while p < endOffset:
-      parseHookArray[Factory, DynNode, BipfBuffer](factory, buffer, p, childs)
-
-    stack.add(factory.newArray(childs))
-  of BipfTag.OBJECT:
-    var map = factory.newMap()
-    let endOffset = p + size
-    while p < endOffset:
-      let kPrefix = buffer.readPrefix(p)
-      assert kPrefix.tag == BipfTag.STRING, "Expected string, got [formely 'required type:string']: "
-
-      let key = factory.readStringNode(buffer, p, kPrefix.size)
-      parseHookMap[Factory, DynNode, BipfBuffer](factory, buffer, p, key, map)
-
-    stack.add(map)
-  of BipfTag.BOOLNULL: stack.add(factory.readBoolNullNode(buffer, p, size))
-  of BipfTag.EXTENDED: stack.add(factory.readBufferNode(buffer, p, size))
-
-proc parseHookMap[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, p: var int, k: DynNode, parentMap: var DynNode) =
-  let prefix = buffer.readPrefix(p)
-  let size = prefix.size
-  let tag = prefix.tag
-
-  case tag
-  of BipfTag.STRING: factory.setEntry(parentMap, k, factory.readStringNode(buffer, p, size))
-  of BipfTag.BUFFER: factory.setEntry(parentMap, k, factory.readBufferNode(buffer, p, size))
-  of BipfTag.INT:   factory.setEntry(parentMap, k, factory.readIntNode(buffer, p, size))
-  of BipfTag.DOUBLE: factory.setEntry(parentMap, k, factory.readDoubleNode(buffer, p, size))
-  of BipfTag.ARRAY:
-    var childs = newSeq[DynNode]()
-    let endOffset = p + size
-    while p < endOffset:
-      parseHookArray[Factory, DynNode, BipfBuffer](factory, buffer, p, childs)
-
-    factory.setEntry(parentMap, k, factory.newArray(childs))
-  of BipfTag.OBJECT:
-    var map = factory.newMap()
-    let endOffset = p + size
-    while p < endOffset:
-      let kPrefix = buffer.readPrefix(p)
-      assert kPrefix.tag == BipfTag.STRING, "Expected string, got [formely 'required type:string']: "
-
-      let key = factory.readStringNode(buffer, p, kPrefix.size)
-      parseHookMap[Factory, DynNode, BipfBuffer](factory, buffer, p, key, map)
-
-    factory.setEntry(parentMap, k, map)
-  of BipfTag.BOOLNULL: factory.setEntry(parentMap, k, factory.readBoolNullNode(buffer, p, size))
-  of BipfTag.EXTENDED: factory.setEntry(parentMap, k, factory.readBufferNode(buffer, p, size))
-
-
-proc deserializeB*[Factory, DynNode, BipfBuffer](factory: var Factory, buffer: BipfBuffer, at: int = 0): DynNode {.inline.} =
-  var p = at
-  var ctx = newSeqOfCap[DynNode](1)
-  parseHookArray[Factory, DynNode, BipfBuffer](factory, buffer, p, ctx)
-  result = ctx[0]
-
-
+{.pop.}

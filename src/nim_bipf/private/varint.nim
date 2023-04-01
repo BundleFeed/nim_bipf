@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+{.push checks:off.}  
 
 func writeVaruint32*[BB](buf: var BB, v: uint32, p: var int) {.inline.} =
   if v < 0x80:
@@ -41,7 +42,6 @@ func writeVaruint32*[BB](buf: var BB, v: uint32, p: var int) {.inline.} =
     p+=5
 
 template readVaruint32*[BB](data: BB, p: var int): uint32 =
-  {.push checks:off.}  
   var b: uint8 = data[p]
   var result = uint32(b and 0x7f)
   inc p
@@ -68,7 +68,7 @@ template readVaruint32*[BB](data: BB, p: var int): uint32 =
 
           if (b and 0x80) != 0:
             raise newException(Exception, "Malformed Varint")
-  {.pop.}
   result
   
+{.pop.}
       

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-import nim_bipf/private/bytebuffer
+import nim_bipf/private/backend/c
 import nim_bipf/private/varint
 
 import std/random

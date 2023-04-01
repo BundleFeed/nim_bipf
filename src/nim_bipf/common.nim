@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import private/bytebuffer
+import std/tables
 
-export ByteBuffer
 
 when defined(js):
   import private/backend/js
@@ -35,18 +34,31 @@ type
     DOUBLE   = 3, # (011) // little endian 64 bit float
     ARRAY    = 4, # (100) // sequence of any other value
     OBJECT   = 5, # (101) // sequence of alternating bipf encoded key and value
-    BOOLNULL = 6, # (110) // 1 = true, 0 = false, no value means null
+    ATOM     = 6, # (110) // 1 = true, 0 = false, no value means null
     EXTENDED = 7 # (111)  // custom type. Specific type should be indicated by varint at start of buffer
 
-  BoolNullValue* = enum
-    TRUE,
-    FALSE,
-    NULL
+  AtomValue* = distinct int
+
+
+  AtomDictionary* = concept d, v, a
+    v is BipfBuffer
+    a is Atom
+    d.atomFor(v) is a
+    d.valueFor(a) is v
 
   BipfPrefix* = distinct uint32
 
-  BipfBuffer* = distinct ByteBuffer
+  BipfBuffer*[OB] = object
+    buffer: OB
+
+
+  NoopKeyDict* = ref object
+
+var NOKEYDICT* : NoopKeyDict = nil
   
+const TRUE* = AtomValue(1)
+const FALSE* = AtomValue(0)
+
 
 
 # BipfPrefix helpers
@@ -63,12 +75,52 @@ template `$`*(p: BipfPrefix): string = "(" & $p.tag & "," & $p.size & ")"
 
 # BipfBuffer helpers
 
-func len*(x: BipfBuffer): int {.borrow.}
-template `[]`*(v: BipfBuffer, i: int): byte = (ByteBuffer(v))[i]
-template `[]`*(v: BipfBuffer, i: HSlice[system.int, system.int]): byte = (ByteBuffer(v))[i]
+template len*(bipf: BipfBuffer): int = bipf.buffer.len
+template readPrefix*[B](bipf: B, p: var int): BipfPrefix = BipfPrefix(readVaruint32(bipf.buffer, p)) 
 
-
-
-func skipNext*[Bi](buffer: Bi, p: var int) {.inline.} =
-  let prefix = buffer.readPrefix(p)
+func skipNext*(bipf: BipfBuffer, p: var int) {.inline.} =
+  let prefix = bipf.readPrefix(p)
   p += prefix.size
+
+template copyBipfBuffer*[B](result: var B, s: BipfBuffer[B], p: var int) = copyBuffer(result, s.buffer, p)
+
+# ------------------------------
+
+template encodingSize*(v: AtomValue): int =
+  if v.int < 0:
+    0
+  elif v.int <= 255:
+    1
+  elif v.int <= 65535:
+    2
+  elif v.int <= 16777215:
+    3
+  else:
+    4
+
+
+# AtomDictionary helpers
+#[ 
+func newAtomDictionary*(): AtomDictionary =
+  result = AtomDictionary()
+  result.atoms = @[]
+  result.atomMap = initTable[BipfBuffer, Atom]()
+
+template hash(buffer: BipfBuffer): Hash =
+  hash(ByteBuffer(buffer))  
+
+func atomFor(dictionary: AtomDictionary, buffer: BipfBuffer): Atom =
+  if dictionary.atomMap.hasKey(buffer):
+    return dictionary.atomMap[buffer]
+  else:
+    let atom = Atom(dictionary.atoms.len.uint32)
+    dictionary.atoms.add(buffer)
+    dictionary.atomMap[buffer] = atom
+    return atom
+  if buffer in dictionary.atomMap:
+    return dictionary.atomMap[buffer]
+  else:
+    let atom = Atom(dictionary.atoms.len.uint32)
+    dictionary.atoms.add(buffer)
+    dictionary.atomMap[buffer] = atom
+    return atom ]#

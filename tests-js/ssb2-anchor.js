@@ -20,18 +20,23 @@
 // 1 author pu key (32 bytes but you don't have to store it for all anchors)
 
 var fs = require('fs')
-var bipf = require('bipf')
+var bipf = require('../')
 
 
 var feeds = {
     "arj": 'tests-js/test-arj.json',
     "cel": 'tests-js/test-cel.json',
-    "andre": 'tests-js/test-andre.json'
+    "andre": 'tests-js/test-andre.json',
+    "generated-ssb-fixtures": 'tests-js/test-bench-fixture.json'
 }
 
 var feedInJsObjects = {}
 var feedInBipf = {}
+var feedInBipfWithKeyDict = {}
 var anchorsInBipf = {}
+var anchorsInBipfWithKD = {}
+
+var keyDict = bipf.newKeyDict()
 
 for (key in feeds) {
     var feedFile = feeds[key]
@@ -68,6 +73,19 @@ for (key in feeds) {
     console.log(" average message size as BIPF Array:", sizeBipfArray/messages.length, " bytes")
 
     console.log('ratio BIPF Array/JS:', Math.round(sizeBipfArray/size * 100), "%")
+
+    var encodedAsBipfArrayWithKeyDict = bipf.serialize(messages, keyDict)
+    feedInBipfWithKeyDict[key] = encodedAsBipfArrayWithKeyDict
+    var sizeBipfArrayWithKeyDict = roughSizeOfObject(encodedAsBipfArrayWithKeyDict)
+    console.log('size for BIPF Array with key dict :', sizeBipfArrayWithKeyDict, "bytes/", Math.round(sizeBipfArrayWithKeyDict/1024), "KB/", Math.round(sizeBipfArrayWithKeyDict/1024/1024), "MB")
+    console.log(" average message size as BIPF Array with key dict:", sizeBipfArrayWithKeyDict/messages.length, " bytes")
+
+    var sizeInMemoryOfKeyDict = roughSizeOfObject(keyDict)
+    console.log('size in memory of key dict :', sizeInMemoryOfKeyDict, "bytes/", Math.round(sizeInMemoryOfKeyDict/1024), "KB/", Math.round(sizeInMemoryOfKeyDict/1024/1024), "MB")
+
+
+    console.log('ratio BIPF Array with key dict/JS:', Math.round((sizeBipfArrayWithKeyDict + sizeInMemoryOfKeyDict)/size * 100), "%")
+
 }
 
 console.log('----------------------------------------')
@@ -79,6 +97,7 @@ console.log(' - 1 anchor when duration since last anchor is > 3 months')
 for (key in feeds) {
     var messages = feedInJsObjects[key]
     var encodedArrayOfBipf = feedInBipf[key]
+    var encodedArrayOfBipfWithKD = feedInBipfWithKeyDict[key]
 
     var anchors = []
     var lastAnchor = null
@@ -135,6 +154,10 @@ for (key in feeds) {
     var anchorArray = bipf.allocAndEncode(feedAnchor)
     anchorsInBipf[key] = anchorArray
     console.log('size for Array of anchors :', anchorArray.byteLength, "bytes/", Math.round(anchorArray.byteLength/1024), "KB/", Math.round(anchorArray.byteLength/1024/1024), "MB")
+    var anchorArrayWithKD = bipf.serialize(feedAnchor, keyDict)
+    anchorsInBipfWithKD[key] = anchorArrayWithKD
+    
+    console.log('size for Array of anchors :', anchorArrayWithKD.byteLength, "bytes/", Math.round(anchorArrayWithKD.byteLength/1024), "KB/", Math.round(anchorArrayWithKD.byteLength/1024/1024), "MB")
 }
 
 
@@ -147,15 +170,21 @@ console.log('----------------------------------------')
 
 var arjFeed = feedInJsObjects['arj']
 var arjFeedBipf = feedInBipf['arj']
+var arjFeedBipfWithKD = feedInBipfWithKeyDict['arj']
 var arjAnchors = anchorsInBipf['arj']
+var arjAnchorsWithKD = anchorsInBipfWithKD['arj']
 
 var sizeOfFeedFor500Users = roughSizeOfObject(arjFeedBipf) * 500
+var sizeOfFeedInBipfWithKDFor500Users = roughSizeOfObject(arjFeedBipfWithKD) * 500
 var sizeOfFeedInJSFor500Users = roughSizeOfObject(arjFeed) * 500
 var sizeOfAnchorsFor500Users = roughSizeOfObject(arjAnchors) * 500
+var sizeOfAnchorsWithKDFor500Users = roughSizeOfObject(arjAnchorsWithKD) * 500
 
 console.log('size of feed in BIPF (default) for 500 followed :', sizeOfFeedFor500Users, "bytes/", Math.round(sizeOfFeedFor500Users/1024), "KB/", Math.round(sizeOfFeedFor500Users/1024/1024), "MB")
+console.log('size of feed in BIPF (with key dict) for 500 followed :', sizeOfFeedInBipfWithKDFor500Users, "bytes/", Math.round(sizeOfFeedInBipfWithKDFor500Users/1024), "KB/", Math.round(sizeOfFeedInBipfWithKDFor500Users/1024/1024), "MB")
 console.log('size of feed in JS for 500 followed :', sizeOfFeedInJSFor500Users, "bytes/", Math.round(sizeOfFeedInJSFor500Users/1024), "KB/", Math.round(sizeOfFeedInJSFor500Users/1024/1024), "MB")
 console.log('size of anchors for 500 followed :', sizeOfAnchorsFor500Users, "bytes/", Math.round(sizeOfAnchorsFor500Users/1024), "KB/", Math.round(sizeOfAnchorsFor500Users/1024/1024), "MB")
+console.log('size of anchors (with Key dict) for 500 followed :', sizeOfAnchorsWithKDFor500Users, "bytes/", Math.round(sizeOfAnchorsWithKDFor500Users/1024), "KB/", Math.round(sizeOfAnchorsWithKDFor500Users/1024/1024), "MB")
 
 estimationOfSizeAfterTruncation(12)
 estimationOfSizeAfterTruncation(24)
@@ -182,13 +211,16 @@ function estimationOfSizeAfterTruncation(months) {
     console.log(' - number of messages since first anchor older than '+months+' months:', messagesSinceFirstAnchor.length)
     var sizeOfMessagesSinceFirstAnchor = roughSizeOfObject(messagesSinceFirstAnchor)
     var messagesSinceFirstAnchorBipf = messagesSinceFirstAnchor.map(msg => bipf.allocAndEncode(msg))
+    var messagesSinceFirstAnchorBipfWithKD = messagesSinceFirstAnchor.map(msg => bipf.serialize(msg, keyDict))
     
     var sizeOfMessagesSinceFirstAnchorInBipf = roughSizeOfObject(messagesSinceFirstAnchorBipf)
-    console.log(' - size of messages since first anchor:', sizeOfMessagesSinceFirstAnchor, "bytes/", Math.round(sizeOfMessagesSinceFirstAnchor/1024), "KB/", Math.round(sizeOfMessagesSinceFirstAnchor/1024/1024), "MB")
+    var sizeOfMessagesSinceFirstAnchorInBipfWithKD = roughSizeOfObject(messagesSinceFirstAnchorBipfWithKD)
+    console.log(' - size of messages since first anchor in JS:', sizeOfMessagesSinceFirstAnchor, "bytes/", Math.round(sizeOfMessagesSinceFirstAnchor/1024), "KB/", Math.round(sizeOfMessagesSinceFirstAnchor/1024/1024), "MB")
     
     console.log('')
     console.log(' projection for 500 followed users:')
     console.log(' - size of messages since first anchor in BIPF:', sizeOfMessagesSinceFirstAnchorInBipf * 500, "bytes/", Math.round(sizeOfMessagesSinceFirstAnchorInBipf * 500/1024), "KB/", Math.round(sizeOfMessagesSinceFirstAnchorInBipf * 500/1024/1024), "MB")
+    console.log(' - size of messages since first anchor in BIPF (with key dict):', sizeOfMessagesSinceFirstAnchorInBipfWithKD * 500, "bytes/", Math.round(sizeOfMessagesSinceFirstAnchorInBipfWithKD * 500/1024), "KB/", Math.round(sizeOfMessagesSinceFirstAnchorInBipfWithKD * 500/1024/1024), "MB")
     console.log(' - size of messages since first anchor in JS:', sizeOfMessagesSinceFirstAnchor * 500, "bytes/", Math.round(sizeOfMessagesSinceFirstAnchor * 500/1024), "KB/", Math.round(sizeOfMessagesSinceFirstAnchor * 500/1024/1024), "MB")
     
     

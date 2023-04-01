@@ -31,34 +31,49 @@ type
 
 
 func compileSimplePath*[ByteBuffer](path: openarray[ByteBuffer]): BPath[ByteBuffer] =
-  trace "compileSimplePath ", path.repr
   result = @[]
   for key in path:
     let keyPrefix = (key.len.uint32 shl 3) or BipfTag.STRING.uint32
     result.add BipfQueryOp[ByteBuffer](opCode: MatchKey, prefix: BipfPrefix(keyPrefix), key: key)
-  trace "compileSimplePath ", result.repr
+
+import strutils
+#[
+func compilePath*[KD:ref](path: string, keyDict: KD): BPath[ByteBuffer] =
+  result = @[]
+  for key in path.split('.'):
+    when compiles(keyDict.atomFor(key)):
+      let atom = keyDict.atomFor(key)
+      let keyPrefix = (atom.len.uint32 shl 3) or BipfTag.STRING.uint32
+      var builder = newBipfBuilder()
+      builder.addAtom(atom)
+      let buffer = builder.finish()
+
+
+
+
+    else:
+      let key = key.toBytes()
+    let keyPrefix = (key.len.uint32 shl 3) or BipfTag.STRING.uint32
+    result.add BipfQueryOp[ByteBuffer](opCode: MatchKey, prefix: BipfPrefix(keyPrefix), key: key)
+ ]#
 
 func runBPath*[BipfBuffer, ByteBuffer](buffer: BipfBuffer, path: BPath[ByteBuffer], start: int = 0): int =
-  trace "runBPath ", path.repr
   var p = start
   for op in path:
     case op.opCode:
       of MatchKey:
-        trace "match key ", $op.prefix, " key:", op.key.repr
         let opPrefix = op.prefix
         let opKey = op.key
 
         let prefix = buffer.readPrefix(p)
 
         if prefix.tag != BipfTag.OBJECT: 
-          trace "not an object"
           return -1
 
         let endOffset = p + prefix.size
         while p < endOffset:  
           let prefix = buffer.readPrefix(p)
 
-          trace "looking for ", $opPrefix, " key:", opKey.repr, " got ", $prefix, " key: [...", char(buffer[p]), ",", char(buffer[p+1]), "...)"
           if prefix == opPrefix and buffer.equals(opKey, p):
             p += prefix.size
             break
