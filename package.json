@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "<!--  Copyright 2023 Geoffrey Picron",
   "main": "dist/nim_bipf.js",
+  "repository": "https://github.com/BundleFeed/nim_bipf",
   "directories": {
     "test": "tests-js"
   },
