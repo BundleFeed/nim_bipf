@@ -17,7 +17,14 @@ var nim_bipf = require('../dist/nim_bipf.js')
 //var nim_bipf_v2 = require('../dist/nim_bipf_v2.js')
 var bipf = require('bipf')
 var fs = require('fs')
-var nim_bipf_node = require('../dist/nim_bipf_node.js')
+
+var nim_bipf_node 
+try {
+    nim_bipf_node = require('../dist/nim_bipf_node.js')
+} catch (e) {
+    console.log('nim_bipf_node not found, skipping benchmarks for node module')
+}
+
 
 
 
@@ -239,10 +246,12 @@ for (let i in data) {
     //     let j = dataIndex++ % b.length
     //     nim_bipf_v2.serialize(b[j], keyDict)
     // })
-    suite.add('nim_bipf_node#serialize/' + i, function () {
-         let j = dataIndex++ % b.length
-         nim_bipf_node.serialize(b[j])
-    })
+    if (nim_bipf_node) {
+        suite.add('nim_bipf_node#serialize/' + i, function () {
+            let j = dataIndex++ % b.length
+            nim_bipf_node.serialize(b[j])
+       })   
+    }
     suite.add('json#stringify/' + i, function () {
         let j = dataIndex++ % b.length
         JSON.stringify(b[j])
@@ -318,10 +327,12 @@ for (let i in bipfData) {
     //     let j = dataIndex++ % b.length
     //     nim_bipf_v2.deserialize(bkv2[j], keyDict)
     // })
-    suite.add('nim_bipf_node#deserialize/' + i, function () {
-        let j = dataIndex++ % b.length
-        nim_bipf_node.deserialize(b[j].buffer)
-    })
+    if (nim_bipf_node) {
+        suite.add('nim_bipf_node#deserialize/' + i, function () {
+            let j = dataIndex++ % b.length
+            nim_bipf_node.deserialize(b[j].buffer)
+        })
+    }
 
     suite.add('json#parse(string)/' + i, function () {
         let j = dataIndex++ % b.length
@@ -364,16 +375,17 @@ for (let i in bipfData) {
         let j = dataIndex++ % b.length
         nim_bipf.serialize(JSON.parse(jb[j].toString()))
     })
+    if (nim_bipf_node) {
+        suite.add('nim_bipf_node#parseJson2Bipf(string)' + i, function () {
+            let j = dataIndex++ % b.length
+            nim_bipf_node.parseJson2Bipf(json[j])
+        })
 
-    suite.add('nim_bipf_node#parseJson2Bipf(string)' + i, function () {
-        let j = dataIndex++ % b.length
-        nim_bipf_node.parseJson2Bipf(json[j])
-    })
-
-    suite.add('nim_bipf_node#parseJson2Bipf(buffer)' + i, function () {
-        let j = dataIndex++ % b.length
-        nim_bipf_node.parseJson2Bipf(jb[j])
-    })
+        suite.add('nim_bipf_node#parseJson2Bipf(buffer)' + i, function () {
+            let j = dataIndex++ % b.length
+            nim_bipf_node.parseJson2Bipf(jb[j])
+        })
+    }
 
     suites.push(suite)
 }
@@ -457,12 +469,13 @@ suite3.add('nim_bipf#seekPath(compiled)', function () {
 // suite3.add('nim_bipf_v2#seekPath(compiled) - run2', function () {
 //     x += compiledNimV2(bv2, 0)
 // })
+if (nim_bipf_node) {
+    var pPath = nim_bipf_node.compileSimpleBPath(['devDependencies', 'faker'])
 
-var pPath = nim_bipf_node.compileSimpleBPath(['devDependencies', 'faker'])
-
-suite3.add('nim_bipf_node#seekPath(compiled)', function () {
-    x += nim_bipf_node.runBPath(b, pPath, 0)
-})
+    suite3.add('nim_bipf_node#seekPath(compiled)', function () {
+        x += nim_bipf_node.runBPath(b, pPath, 0)
+    })
+}
 
 suites.push(suite3)
 
@@ -543,33 +556,33 @@ suite4.add('nim_bipf#jsArray[bipf]/seekPath(compiled)', function () {
 //     }
 //     //console.log(result.length)
 // })
+if (nim_bipf_node) {
+    var pPath = nim_bipf_node.compileSimpleBPath(['value', 'content', 'type'])
 
-var pPath = nim_bipf_node.compileSimpleBPath(['value', 'content', 'type'])
 
-
-suite4.add('nim_bipf_node#jsArray[bipf]/seekPath(compiled)', function () {
-    var count = 0
-    var result = []
-    var i = 0
-    while (count < 100 && i < encodedSsbMessages.length) {
-        var p = nim_bipf_node.runBPath(encodedSsbMessages[i], pPath, 0)
-        if (p != -1) {
-            var match = contactInBipf.compare(encodedSsbMessages[i], p, p + contactInBipf.length) === 0    
-            if (match) {
-                count++
-                result.push(encodedSsbMessages[i])
+    suite4.add('nim_bipf_node#jsArray[bipf]/seekPath(compiled)', function () {
+        var count = 0
+        var result = []
+        var i = 0
+        while (count < 100 && i < encodedSsbMessages.length) {
+            var p = nim_bipf_node.runBPath(encodedSsbMessages[i], pPath, 0)
+            if (p != -1) {
+                var match = contactInBipf.compare(encodedSsbMessages[i], p, p + contactInBipf.length) === 0    
+                if (match) {
+                    count++
+                    result.push(encodedSsbMessages[i])
+                }
             }
+            i++
         }
-        i++
-    }
-})
+    })
 
-nim_bipf_node.loadDB(encodedSsbMessages)
+    nim_bipf_node.loadDB(encodedSsbMessages)
 
-suite4.add('nim_bipf_node#inModuleMemory', function () {
-    nim_bipf_node.searchContacts()
-})
-
+    suite4.add('nim_bipf_node#inModuleMemory', function () {
+        nim_bipf_node.searchContacts()
+    })
+}
 suites.push(suite4)
 
 

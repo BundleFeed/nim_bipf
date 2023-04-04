@@ -34,7 +34,6 @@
   },
   "scripts": {
     "test": "npx tape tests-js/index.js | tap-arc && tape tests-js/compare.js | tap-arc && tape tests-js/fixtures.js | tap-arc",
-    "install": "cmake-js compile",
     "benchmark": "node tests-js/benchmarks.js"
   },
   "author": "Geoffrey Picron",
