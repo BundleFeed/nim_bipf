@@ -1,6 +1,6 @@
 {
   "name": "nim_bipf",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "<!--  Copyright 2023 Geoffrey Picron",
   "main": "dist/nim_bipf.js",
   "directories": {
