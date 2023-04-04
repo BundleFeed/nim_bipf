@@ -18,13 +18,15 @@ import nim_bipf/private/varint
 
 import std/random
 
+import std/bitops
+
 suite "byte buffer":
   test "varint":
     var r1 = initRand(123)
-    for i in 0..100:
+    for i in 0..10000:
       let v = r1.rand(0.uint32..high(uint32))
 
-      var buf = newByteBuffer(5)
+      var buf = allocBuffer(DEFAULT_CONTEXT, 5)
 
       var p = 0
       buf.writeVaruint32(v, p)
@@ -33,3 +35,31 @@ suite "byte buffer":
 
       check p == p2
       check v == v2
+
+  test "varint extremes":
+    for v in [0.uint32, high(uint32)]:
+      var buf = allocBuffer(DEFAULT_CONTEXT, 5)
+
+      var p = 0
+      buf.writeVaruint32(v, p)
+      var p2 = 0
+      let v2 = buf.readVaruint32(p2)
+
+      check v == v2
+      check p == p2
+
+  test "varint ranges":
+    for i in 0..31:
+      let v = 1'u32 shl i
+
+      var buf = allocBuffer(DEFAULT_CONTEXT, 5)
+
+      var p = 0
+      buf.writeVaruint32(v, p)
+      var p2 = 0
+      let v2 = buf.readVaruint32(p2)
+
+      check p == p2
+      check v == v2
+      
+

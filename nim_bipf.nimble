@@ -24,6 +24,9 @@ requires "https://github.com/juancarlospaco/nodejs"
 task compilePureJs, "Compile to pure JS":
   exec "nim js -d:release --app:lib  --rangeChecks:off  --boundChecks:off --sinkInference:on  --out:dist/nim_bipf.js --d:nodejs --mm:orc  src/js/index.nim"
 
+task compilePureJsV2, "Compile to pure JS - BIPF V2":
+  exec "nim js -d:release --app:lib -d:alt_varint --rangeChecks:off  --boundChecks:off --sinkInference:on  --out:dist/nim_bipf_v2.js --d:nodejs --mm:orc  src/js/index.nim"
+
 task compilePureJsDebug, "Compile to pure JS (Debug)":
   exec "nim js --app:lib --sinkInference:on  --out:dist/nim_bipf.js --d:nodejs --mm:orc  src/js/index.nim"
 
@@ -38,12 +41,16 @@ task benchNim, "Benchmark Nim":
 
 task benchJs, "Benchmark JS":
   compilePureJsTask()
+  compilePureJsV2Task()
   exec "node tests-js/benchmarks.js"
+
+task genNodeJsModuleCCode, "Generate C code for NodeJS module":
+  rmDir "dist/src"
+  exec "nim c -c -d:danger --sinkInference:on --passC:-ffast-math --passC:-flto --passL:-flto --mm:orc --nimcache:dist/src src/js/nodejs/binding.nim"
 
 task compileNodeJsModule, "Build for NodeJS":
   #exec "$HOME/.nimble/bin/node_binding init -n " & $packageName & " -v " & version & " -d \"" & description &  "\" -a \"" & author & "\" -l \"" & license & "\""
-  rmDir "dist/src"
-  exec "nim c -c -d:release --sinkInference:on --passC:-ffast-math --passC:-flto --passL:-flto --mm:orc --nimcache:dist/src src/js/nodejs/binding.nim"
+  genNodeJsModuleCCodeTask()
   exec "npx cmake-js clean"
   exec "npx cmake-js build -l verbose "
 
@@ -53,3 +60,8 @@ task compileNodeJsModuleDebug, "Build for NodeJS":
   exec "nim c -c -d:debug --sinkInference:on --passC:-flto --passL:-flto --mm:orc --nimcache:dist/src src/js/nodejs/binding.nim"
   exec "npx cmake-js clean"
   exec "npx cmake-js build --debug -l verbose"
+
+task package, "Package for NPM":
+  exec "npx cmake-js clean"
+  genNodeJsModuleCCodeTask()
+  compilePureJsTask()

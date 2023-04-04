@@ -12,29 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import std/logging
-import ../nim_bipf/private/bytebuffer
+import ../nim_bipf/private/backend/js
+import ../nim_bipf/private/backend/nodebuffer
 import ../nim_bipf/private/deser
 import ../nim_bipf/private/varint
-import ../nim_bipf/private/logging as tracing
 
 import ../nim_bipf/common
 import ../nim_bipf/builder
-import ../nim_bipf/reader
-import ../nim_bipf/seeker
 import ../nim_bipf/bpath
 import std/options
 import sequtils
 
-var consoleLog = newConsoleLogger(levelThreshold=lvlAll)
-addHandler(consoleLog)
 
 import std/jsffi
 import ../../../jsExport.nim/src/jsExport
-import nodebuffer
+
 
 when not(defined(js)) or not(defined(nodejs)):
     {.fatal "This module is only for the JavaScript target on nodejs.".}
+
+type JsBipfBuffer = BipfBuffer[NodeJsBuffer]
 
 func isUint8Array(s: JsObject): bool {.importjs: "(# instanceof Uint8Array)".}
 func isArray(s: JsObject): bool {.importjs: "(Array.isArray(#))".}
@@ -42,37 +39,40 @@ func isSafeInteger(s: JsObject): bool {.importjs: "(Number.isSafeInteger(#))".}
 func isFinite(s: JsObject): bool {.importjs: "(Number.isFinite(#))".}
 func declareSymbol(s: cstring): cstring {.importjs: "Symbol(#)".}
 
-  
+
 
 var bipfBufferSymbol = declareSymbol("nim_bipf_buffer")
-var BipfBufferTool {.exportc : "BipfBuffer".} = newJsObject()
+# var BipfBufferTool {.exportc : "BipfBuffer".} = newJsObject()
 
 func isBipfBuffer(s: JsObject): bool  =
   {.noSideEffect.}:
-    result = jsTypeOf(s) == "object" and s.hasOwnProperty(bipfBufferSymbol)
+    result = (isNodeJsBuffer(s) and s.hasOwnProperty(bipfBufferSymbol)) or 
+              (jsTypeOf(s) == "object" and isNodeJsBuffer(s.buffer) and s.buffer.hasOwnProperty(bipfBufferSymbol))
+    
 
-BipfBufferTool.isBipfBuffer = isBipfBuffer
+# BipfBufferTool.isBipfBuffer = isBipfBuffer
 
-template equals(source: BipfBuffer; target: NodeJsBuffer; p: int): bool =
-  compare(cast[NodeJsBuffer](source), target, 0, target.len, p, p+target.len) == 0
+converter toInt32(n: JsObject): int32                  = cast[int32](n)
+converter toDouble(n: JsObject): float64               = cast[float](n).float64
+converter toString(n: JsObject): cstring               = cast[cstring](n)
+converter toBool(n: JsObject): bool                    = cast[bool](n) 
+converter toInputBuffer(n: JsObject): NodeJsBuffer     = cast[NodeJsBuffer](n)
+converter toBipfBuffer(n: JsObject): BipfBuffer[NodeJsBuffer]        = 
+  if isNodeJsBuffer(n):
+    result = BipfBuffer[NodeJsBuffer](buffer:NodeJsBuffer(n))
+  else:
+    result = cast[BipfBuffer[NodeJsBuffer]](n)
+converter toAtom(n: JsObject): AtomValue               = raise newException(ValueError, "Atom Value not yet implemented for JS API")  
 
+# var valueAtomsMap = newJsAssoc[cstring, AtomValue]()
+# var valueAtoms = newSeq[cstring]()
 
-converter toInt(n: JsObject): int32             = cast[int32](n)
-converter toDouble(n: JsObject): float64        = cast[float](n).float64
-converter toString(n: JsObject): cstring        = cast[cstring](n)
-converter toBool(n: JsObject): bool             = cast[bool](n) 
-converter toBuffer(n: JsObject): ByteBuffer     = cast[ByteBuffer](n)
-converter toBipfBuffer(n: JsObject): BipfBuffer = cast[BipfBuffer](n)
-
-var valueAtomsMap = newJsAssoc[cstring, AtomValue]()
-var valueAtoms = newSeq[cstring]()
-
-converter toAtom(n: JsObject): AtomValue =
-  result = valueAtomsMap[n.cstring]
-  if isUndefined(result):
-    result = AtomValue(valueAtoms.len.uint32)
-    valueAtomsMap[n.cstring] = result
-    valueAtoms.add(n.cstring)
+# converter toAtom(n: JsObject): AtomValue =
+#   result = valueAtomsMap[n.cstring]
+#   if isUndefined(result):
+#     result = AtomValue(valueAtoms.len.uint32)
+#     valueAtomsMap[n.cstring] = result
+#     valueAtoms.add(n.cstring)
 
 
 func dnKind(obj: JsObject): DynNodeKind  =
@@ -82,7 +82,7 @@ func dnKind(obj: JsObject): DynNodeKind  =
     elif jsType == "boolean":
       result = nkBool
     elif jsType == "number":
-      if obj.isSafeInteger() and (obj.toInt >= low(int32)) and (obj.toInt <= high(int32)):
+      if obj.isSafeInteger() and (obj.toInt32 >= low(int32)) and (obj.toInt32 <= high(int32)):
         result = nkInt
       elif obj.isFinite():
         result = nkDouble
@@ -110,12 +110,33 @@ iterator dnPairs(node:JsObject): (cstring,JsObject) =
   for key, value in node.pairs():
     yield (key, value.toJs())
 
+
+
+proc addJsObject*(b: var BipfBuilder, key: sink cstring, node: sink JsObject) {.inline.} =
+  addNodeWithKey(b, key, node)
+
+proc addJsObject*(b: var BipfBuilder, node: sink JsObject) {.inline.} =
+  addNode(b, node)
+
+
+
+template markAsBipfBuffer(s: typed)  =
+  {.noSideEffect.}:
+    s.toJs()[bipfBufferSymbol] = true
+
 type 
   CStringAtomDict = object of JsObject
     values: seq[cstring]
     map: JsAssoc[cstring, AtomValue]
 
-  CStringAtomDictRef = ref CStringAtomDict
+  CStringAtomDictRef* = ref CStringAtomDict
+
+  JsContextWithKeyDict* = object
+    keyDict: CStringAtomDictRef
+
+template inputBufferType*(ctx: JsContextWithKeyDict): typedesc = NodeJsBuffer
+template outputBufferType*(ctx: JsContextWithKeyDict): typedesc = NodeJsBuffer
+template allocBuffer*(ctx: JsContextWithKeyDict, size: int) : NodeJsBuffer = nodebuffer.allocUnsafe(size)
 
 proc newKeyDict*(): CStringAtomDictRef =
   result = CStringAtomDictRef(
@@ -123,8 +144,8 @@ proc newKeyDict*(): CStringAtomDictRef =
     map: newJsAssoc[cstring, AtomValue]()
   )
   ## add 2 nil values to the dict for true and false
-  result.values.add(jsNull)
-  result.values.add(jsNull)
+  result.values.add(cast[cstring](jsNull))
+  result.values.add(cast[cstring](jsNull))
 
 template atomFor*(dict: CStringAtomDictRef; value: cstring): AtomValue =
   var result = dict.map[value]
@@ -137,116 +158,20 @@ template atomFor*(dict: CStringAtomDictRef; value: cstring): AtomValue =
 template valueFor*(dict: CStringAtomDictRef; atom: AtomValue): JsObject = dict.values[atom.uint32].toJs()
 
 
-proc addJsObject*(b: var BipfBuilder, key: sink cstring, node: sink JsObject) {.inline.} =
-  addNodeWithKey(b, key, node, NOKEYDICT)
 
-proc addJsObject*(b: var BipfBuilder, node: sink JsObject) {.inline.} =
-  addNode(b, node, cstring, NOKEYDICT)
-
-proc addJsObjectWithKeyDict*(b: var BipfBuilder, key: sink cstring, node: sink JsObject, keyDict: CStringAtomDictRef) {.inline.} =
-  addNodeWithKey(b, key, node, keyDict)
-
-proc addJsObjectWithKeyDict*(b: var BipfBuilder, node: sink JsObject, keyDict: CStringAtomDictRef) {.inline.} =
-  addNode(b, node, cstring, keyDict)
-
-
-template markAsBipfBuffer(s: typed)  =
-  {.noSideEffect.}:
-    s.toJs()[bipfBufferSymbol] = true
-
-when defined(nodejs):
-  func toBuffer(s: ByteBuffer): JsObject {.importjs: "Buffer.from(#)"}
-else:
-  func toBuffer(s: ByteBuffer): JsObject {.importjs: "(#)"}
-
-template dispatcher1(prototype: JsObject, procName: untyped): untyped =  
-  prototype.procName = bindMethod proc (this: BipfBuilder, arg0: sink JsObject) =
-    var that = this
-    if isUndefined(arg0):
-      that.procName()
-    else:
-      that.procName(arg0)
-
-template dispatcher2(prototype: JsObject, procName: untyped): untyped =  
-  prototype.procName = bindMethod proc (this: BipfBuilder, arg0: sink JsObject, arg1: sink JsObject) =
-    var that = this
-    if isUndefined(arg1):
-      that.procName(arg0)
-    else:
-      that.procName(arg0, arg1)
-
-type 
-  BuilderCtxWithoutKeyDict = distinct int
-  BuilderCtxWithKeyDict = object
-    keyDict: CStringAtomDictRef
-  BuilderCtx = BuilderCtxWithoutKeyDict | BuilderCtxWithKeyDict
-
-var defaultBuilderContext = BuilderCtxWithoutKeyDict(0)
-
-
-func newBipfBuilder(): BipfBuilder[BuilderCtxWithoutKeyDict] =
-  result = newBipfBuilder(defaultBuilderContext)
-  var prototype = cast[JsObject](result)
+proc serialize*(obj: JsObject, maybeKeyDict: CStringAtomDictRef): JsBipfBuffer  =
   
-  dispatcher1(prototype, startArray)
-  prototype.endArray = bindMethod proc (this: BipfBuilder) =
-    var that = this
-    that.endArray()
-  dispatcher1(prototype, startMap)
-  prototype.endMap = bindMethod proc (this: BipfBuilder) =
-    var that = this
-    that.endMap()
-  dispatcher1(prototype, addNull)
-  dispatcher2(prototype, addString)
-  dispatcher2(prototype, addInt)
-  dispatcher2(prototype, addDouble)
-  dispatcher2(prototype, addBool)
-  dispatcher2(prototype, addBuffer)
-  dispatcher2(prototype, addExtended)
-  prototype.finish = bindMethod proc (this: BipfBuilder): BipfBuffer =
-    var that = this
-    result = that.finish()
-    markAsBipfBuffer(result)
-
-
-
-proc serialize*(obj: JsObject, maybeKeyDict: CStringAtomDictRef): BipfBuffer  =
-  var builder = newBipfBuilder()
   if isUndefined(maybeKeyDict):
+    var builder = newBipfBuilder(DEFAULT_CONTEXT)
     builder.addJsObject(obj)
+    result = builder.finish()
   else:
-    builder.addJsObjectWithKeyDict(obj, maybeKeyDict)
-  result = builder.finish()
-  markAsBipfBuffer(result)
-
-
-import std/deques
-
-## Backward compatibility with the bipf module
-
-var lastObjectVisited: JsObject = nil
-var lastBufferProduced: BipfBuffer
-
-proc encodingLength(obj: JsObject): int  =
-  lastBufferProduced = serialize(obj, nil)
-  lastObjectVisited = obj
-  result = ByteBuffer(lastBufferProduced).len
-
-func isNodeJsBuffer(buffer: JsObject): bool {.importjs: "( typeof Buffer !== 'undefined' && Buffer.isBuffer(#) )".}
-
-proc encode(obj: JsObject, buffer: NodeJsBuffer, offset: int = 0): int =
-  let offset = if isUndefined(offset): 0 else: offset
-
-  if obj != lastObjectVisited:
-    lastBufferProduced = serialize(obj, nil)
-    lastObjectVisited = obj
-
-  if buffer.len - offset < ByteBuffer(lastBufferProduced).len and not isNodeJsBuffer(buffer.toJs()):
-    raise newException(ValueError, "Buffer too small")
-
-  var p = offset
-  ByteBuffer(buffer).writeBuffer(ByteBuffer(lastBufferProduced), p)
-  result = p - offset
+    var ctx = JsContextWithKeyDict(keyDict:maybeKeyDict)
+    var builder = newBipfBuilder(ctx)
+    builder.addJsObject(obj)
+    result = builder.finish()
+  
+  markAsBipfBuffer(result.buffer)
 
 
 let jsTrue {.importjs: "true", nodecl.} : JsObject
@@ -319,80 +244,101 @@ template readAtomNode*(factory: DeserCtx, source: NodeJsBuffer, p: var int, l: i
     of 1: jsTrue
     else: result.toJs
 
-proc deserialize(buffer: BipfBuffer, maybeStartOrKeyDict: JsObject, maybeKeyDict: CStringAtomDictRef): JsObject =
+proc deserialize(bipf: JsBipfBuffer, maybeStartOrKeyDict: JsObject, maybeKeyDict: CStringAtomDictRef): JsObject =
   var start = 0
   if jsTypeOf(maybeStartOrKeyDict) == "number":
     start = toInt(maybeStartOrKeyDict)
     if isUndefined(maybeKeyDict):
-      deserialize[DeserCtxWithoutKeyDict](jsObjectFactory, NodeJsBuffer(buffer.toJs), start)
+      deserialize[DeserCtxWithoutKeyDict](jsObjectFactory, bipf, start)
     else:
       var ctx = DeserCtxWithKeyDict(keyDict: maybeKeyDict)
-      deserialize[DeserCtxWithKeyDict](ctx, NodeJsBuffer(buffer.toJs), start)
+      deserialize[DeserCtxWithKeyDict](ctx, bipf, start)
   elif isUndefined(maybeStartOrKeyDict):
-    deserialize[DeserCtxWithoutKeyDict](jsObjectFactory, NodeJsBuffer(buffer.toJs), start)
+    deserialize[DeserCtxWithoutKeyDict](jsObjectFactory, bipf, start)
   else:
     var ctx = DeserCtxWithKeyDict(keyDict:CStringAtomDictRef(maybeStartOrKeyDict))
-    deserialize[DeserCtxWithKeyDict](ctx, NodeJsBuffer(buffer.toJs), start)
+    deserialize[DeserCtxWithKeyDict](ctx, bipf, start)
 
 
-func `$`(obj: JsObject): string =
-  let jsType = jsTypeOf(obj)
-  if jsType == "string":
-    return $cast[cstring](obj)
-  elif 
-    jsType == "boolean" or
-    jsType == "number" or
-    jsType == "undefined" or
-    jsType == "null":
-    return $obj
-  elif jsType == "object":
-    if isNull(obj):
-      return "null"
-    elif isArray(obj):
-      var res = "["
-      for i in 0..<obj.length:
-        if i > 0:
-          res.add(", ")
-        res.add($obj[i])
-      return res & "]"
-    else:
-      var res = "{"
-      var first = true
-      for key, value in pairs(obj):
-        if not first:
-          res.add(", ")
-        first = false
-        res.add($key & ": " & $value)
-      return res & "}"
-  else:
-    raise newException(ValueError, "Unsupported type: " & $jsType)
+## Backward compatibility with the bipf module
 
-proc seekKey(buffer: BipfBuffer, start: int, key: JsObject): int =
-  var keyBuffer = if jsTypeOf(key) == "string": newByteBuffer(key.cstring)
-                  elif jsTypeOf(key) == "object" and isNodeJsBuffer(key): ByteBuffer(key)
-                  else: raise newException(ValueError, "Unsupported key type: " & $jsTypeOf(key))
+var lastObjectVisited: JsObject = nil
+var lastBufferProduced: NodeJsBuffer
+
+proc encodingLength(obj: JsObject): int  =
+  lastBufferProduced = serialize(obj, nil).buffer
+  lastObjectVisited = obj
+  result = lastBufferProduced.len
+
+
+proc encode(obj: JsObject, buffer: NodeJsBuffer, offset: int = 0): int =
+  let offset = if isUndefined(offset): 0 else: offset
+
+  if obj != lastObjectVisited:
+    lastBufferProduced = serialize(obj, nil).buffer
+    lastObjectVisited = obj
+
+  if buffer.len - offset < lastBufferProduced.len and not isNodeJsBuffer(buffer.toJs()):
+    raise newException(ValueError, "Buffer too small")
   
-  result = buffer.findKey(keyBuffer, start)
 
-proc seekKey2(buffer: BipfBuffer, start: int, key: BipfBuffer, keyStart: int): int =
-  result = buffer.findKey(key, start, if isUndefined(keyStart): 0 else: keyStart)
+  var p = offset
+  
+  buffer.copyBuffer(lastBufferProduced, p)
+  
+  result = p - offset
+
+proc allocAndEncode(obj: JsObject): NodeJsBuffer = serialize(obj, nil).buffer
 
 
-var seekKeyCache = newJsAssoc[cstring, ByteBuffer]()
+proc decode(buffer: NodeJsBuffer, maybeStart: int): JsObject =
+  deserialize(JsBipfBuffer(buffer: buffer), maybeStart.toJs, nil)
 
-proc seekKeyCached(buffer: BipfBuffer, start: int, key: cstring): int =
+
+
+proc compileSimplePath(path: openArray[cstring]) : BPath[NodeJsBuffer] =
+  var bufArr = newSeq[NodeJsBuffer](path.len)
+  for i, p in path:
+    bufArr[i] = fromCString(p)
+  result = bpath.compileSimplePath(bufArr)
+
+
+proc seekKey(buffer: NodeJsBuffer, start: int, key: JsObject): int =
+  var keyBuffer = if jsTypeOf(key) == "string": nodebuffer.fromCString(key.cstring)
+                  elif jsTypeOf(key) == "object" and isNodeJsBuffer(key): cast[NodeJsBuffer](key)
+                  else: raise newException(ValueError, "Unsupported key type: " & $jsTypeOf(key))
+
+  let bpath = bpath.compileSimplePath([keyBuffer])
+
+
+  result = JsBipfBuffer(buffer:buffer).runBPath(bpath, start)
+
+proc seekKey2(buffer: NodeJsBuffer, start: int, key: NodeJsBuffer, keyStart: int): int =
+  var pTarget = if isUndefined(keyStart): 0 else: keyStart
+  let prefix = key.readPrefix(pTarget)
+
+  assert prefix.tag == BipfTag.String, "Invalid path (formely 'seekKey2 require a string bipf'): "  & $prefix.tag  
+
+  let bpath = bpath.compileSimplePath([key.subarray(pTarget, pTarget+prefix.size)])
+
+  result = JsBipfBuffer(buffer:buffer).runBPath(bpath, start)
+
+
+var seekKeyCache = newJsAssoc[cstring, BPath[NodeJsBuffer]]()
+
+proc seekKeyCached(buffer: NodeJsBuffer, start: int, key: cstring): int =
   if jsTypeOf(key.toJs) != "string":
     raise newException(ValueError, "Unsupported key type (formely 'seekKeyCached only supports string target'): " & $jsTypeOf(key.toJs))
   
-  var keyBuffer = seekKeyCache[key]
-  if isUndefined(keyBuffer):
-    keyBuffer = newByteBuffer(key)
-    seekKeyCache[key] = keyBuffer
+  var bpath = seekKeyCache[key]
+  if isUndefined(bpath):
+    bpath = compileSimplePath([key])
+    seekKeyCache[key] = bpath
 
-  result = buffer.findKey(keyBuffer, start)
+  result = JsBipfBuffer(buffer:buffer).runBPath(bpath, start)
 
 
-proc seekPath(buffer: BipfBuffer, start: int, target: BipfBuffer, targetStart: int): int =
+proc seekPath(buffer: NodeJsBuffer, start: int, target: NodeJsBuffer, targetStart: int): int =
   if not isNodeJsBuffer(target.toJs):
     raise newException(ValueError, "Unsupported target type (formely 'path must be encoded array'): " & $jsTypeOf(target.toJs))
 
@@ -405,30 +351,98 @@ proc seekPath(buffer: BipfBuffer, start: int, target: BipfBuffer, targetStart: i
   while (pTarget < target.len):
     let prefix = target.readPrefix(pTarget)
 
-    assert prefix.tag == BipfTag.String, "Invalid path (formely 'seekPath only supports string target'): "    
-    path.add(cast[NodeJsBuffer](target.readBufferValue(pTarget, prefix.size)))
+    assert prefix.tag == BipfTag.String, "Invalid path (formely 'seekPath only supports string target'): "  & $prefix.tag  
 
-  let bpath = compileSimplePath(path)
+    let size = prefix.size
 
-  result = buffer.runBPath(bpath, start)
+    path.add(target.subarray(pTarget, pTarget+size))
+    pTarget += size
+    
+
+  let bpath = bpath.compileSimplePath(path)
+
+
+  result = JsBipfBuffer(buffer:buffer).runBPath(bpath, start)
 
 type
-  SeekFunction = proc (buffer: BipfBuffer, start: int): int
+  SeekFunction = proc (buffer: NodeJsBuffer, start: int): int
 
-proc compileSimplePath(path: openArray[cstring]) : BPath[NodeJsBuffer] =
-  var bufArr = newSeq[NodeJsBuffer](path.len)
-  for i, p in path:
-    bufArr[i] = fromCString(p)
-  result = compileSimplePath(bufArr)
 
 proc createSeekPath(path: openArray[cstring]) : SeekFunction =
   let bpath = compileSimplePath(path)
 
-  result = proc (buffer: BipfBuffer, start: int): int =
-    buffer.runBPath(bpath, start)
+  result = proc (buffer: NodeJsBuffer, start: int): int =
+    BipfBuffer[NodeJsBuffer](buffer: buffer).runBPath(bpath, start)
   
 type 
-  CompareFunction = proc (b1: BipfBuffer, b2: BipfBuffer): int
+  CompareFunction = proc (b1: NodeJsBuffer, b2: NodeJsBuffer): int
+
+
+func compareBipfValues*(b1: NodeJsBuffer, b2: NodeJsBuffer, start1: int = 0, start2: int = 0) : int =
+  assert isNodeJsBuffer(b1.toJs), "b1 must be a NodeJsBuffer"
+  assert isNodeJsBuffer(b2.toJs), "b2 must be a NodeJsBuffer"
+  # undefined is larger than anything
+  if start1 < 0:
+    if start2 < 0:
+      return 0
+    else:
+      return 1
+  elif start2 < 0:
+    return -1
+
+  var p1 = start1 
+  var p2 = start2
+
+  let prefix1 = b1.readPrefix(p1)
+  let prefix2 = b2.readPrefix(p2)
+
+  # null is smaller than anything
+  if prefix1.uint32 == NULL_PREFIX.uint32:
+    if prefix2.uint32 == NULL_PREFIX.uint32:
+      return 0
+    else:
+      return -1
+  elif prefix2.uint32 == NULL_PREFIX.uint32:
+    return 1
+
+  let tag1 = prefix1.tag
+  let size1 = prefix1.size
+  let tag2 = prefix2.tag
+  let size2 = prefix2.size
+
+  # compare number types combinations
+  if tag1 == BipfTag.INT and tag2 == BipfTag.DOUBLE:
+    let v1 = b1.readInt32LE(p1)
+    let v2 = b2.readDoubleLE(p2)
+    return float64(v1).cmp(v2)
+  elif tag2 == BipfTag.INT and tag1 == BipfTag.DOUBLE:
+    let v2 = b2.readInt32LE(p2)
+    let v1 = b1.readDoubleLE(p1)
+    return v1.cmp(float64(v2))
+  
+  # if not same type, compare by type
+  if (tag1 != tag2):
+    return tag1.int - tag2.int
+
+  if tag1 == BipfTag.INT:
+    let v1 = b1.readInt32LE(p1)
+    let v2 = b2.readInt32LE(p2)
+    return v1.cmp(v2)
+  elif tag1 == BipfTag.DOUBLE:
+    let v1 = b1.readDoubleLE(p1) # we tested yet nulls
+    let v2 = b2.readDoubleLE(p2)
+    return v1.cmp(v2)
+  else: # make bytes comparison
+    assert isNodeJsBuffer(b1.toJs), "b1 must be a NodeJsBuffer"
+    assert isNodeJsBuffer(b2.toJs), "b2 must be a NodeJsBuffer : " & $jsTypeOf(b2.toJs) 
+
+    let v1 = b1.subarray(p1, p1+size1)
+    let v2 = b2.subarray(p2, p2+size2)
+    return compare(v1, v2, 0, size1, 0, size2)
+
+proc compatCompare(b1: NodeJsBuffer, start1: int, b2: NodeJsBuffer, start2: int) : int =
+  compareBipfValues(b1, b2, start1, start2)
+
 
 proc createCompareAt(paths: seq[seq[cstring]]) : CompareFunction =
   var bPathArray = newSeq[BPath[NodeJsBuffer]](paths.len)
@@ -437,26 +451,30 @@ proc createCompareAt(paths: seq[seq[cstring]]) : CompareFunction =
     bPathArray[i] = compileSimplePath(path)
     inc i
   
-  result = proc (b1: BipfBuffer, b2: BipfBuffer): int =
-    for pPath in bPathArray:
-      let v1 = b1.runBPath(pPath, 0)
-      let v2 = b2.runBPath(pPath, 0)
+  result = proc (b1: NodeJsBuffer, b2: NodeJsBuffer): int =
+    assert isNodeJsBuffer(b1.toJs), "b1 must be a NodeJsBuffer"
+    assert isNodeJsBuffer(b2.toJs), "b2 must be a NodeJsBuffer"
 
-      result = compare(b1, b2, v1, v2)
+    for pPath in bPathArray:
+      let v1 = BipfBuffer[NodeJsBuffer](buffer: b1).runBPath(pPath, 0)
+      let v2 = BipfBuffer[NodeJsBuffer](buffer: b2).runBPath(pPath, 0)
+
+
+      result = compareBipfValues(b1, b2, v1, v2)
       if result != 0:
         return result
     return 0
 
-proc slice(buffer: BipfBuffer, start: int): JsObject =
+proc slice(buffer: NodeJsBuffer, start: int): NodeJsBuffer =
   ## this function return the value buffer
   ## without the prefix
   var p = start
   let prefix = buffer.readPrefix(p)
   let size = prefix.size
   
-  result = buffer.readBufferValue(p, size).toBuffer
+  result = buffer.subarray(p, p+size)
 
-proc  pluck(buffer: BipfBuffer, start: int): JsObject =
+proc  pluck(buffer: NodeJsBuffer, start: int): NodeJsBuffer =
   ## this function return the value buffer
   ## without the prefix
   var p = start
@@ -464,21 +482,21 @@ proc  pluck(buffer: BipfBuffer, start: int): JsObject =
   let size = prefix.size + (p - start)
   p = start
   
-  result = buffer.readBufferValue(p, size).toBuffer
+  result = buffer.subarray(p, p+size)
 
 
 proc encodeIdempotent(obj: JsObject, buffer: NodeJsBuffer, offset: int = 0): int =
   result = encode(obj, buffer, offset)
   markAsBipfBuffer(result)
 
-proc markIdempotent(buffer: BipfBuffer): BipfBuffer =
+proc markIdempotent(buffer: NodeJsBuffer): NodeJsBuffer =
   result = buffer
   markAsBipfBuffer(result)
 
 type 
-  IterateCallback = proc (buffer: BipfBuffer, valuePointer: int, keyPointerOrIndex: int) : bool
+  IterateCallback = proc (buffer: NodeJsBuffer, valuePointer: int, keyPointerOrIndex: int) : bool
 
-proc iterate(objBuf: BipfBuffer, start: int, callback: IterateCallback) : int =
+proc iterate(objBuf: NodeJsBuffer, start: int, callback: IterateCallback) : int =
   var p = start
   let prefix = objBuf.readPrefix(p)
   let size = prefix.size
@@ -512,17 +530,19 @@ proc iterate(objBuf: BipfBuffer, start: int, callback: IterateCallback) : int =
   else:
     return -1
 
-func getEncodedLength(obj: BipfBuffer, start: int): int =
+func getEncodedLength(obj: NodeJsBuffer, start: int): int =
   var p = if isUndefined(start): 0 else: start
 
   let prefix = obj.readPrefix(p)
   return prefix.size
 
-func getEncodedType(obj: BipfBuffer, start: int): BipfTag =
+func getEncodedType(obj: NodeJsBuffer, start: int): BipfTag =
   var p = if isUndefined(start): 0 else: start
 
   let prefix = obj.readPrefix(p)
   return prefix.tag
+
+
 
 
 
@@ -538,16 +558,10 @@ typesConstants["boolnull"] = BipfTag.ATOM
 typesConstants["atom"] = BipfTag.ATOM
 typesConstants["extended"] = BipfTag.EXTENDED
 
-proc compareCompat(b1: BipfBuffer, v1: int, b2: BipfBuffer,  v2: int): int =
-  ### this function is a compatibility wrapper for the old compare function
-  result = compare(b1, b2, v1, v2)
-
-import ../nim_bipf/serde_json
-
 
 jsExportTypes:
   NodeJsBuffer
-  BipfBuffer
+  JsBipfBuffer
   CStringAtomDict
   
 
@@ -559,8 +573,8 @@ jsExport:
 
   encodingLength
   encode
-  "allocAndEncode" = serialize
-  "decode" = deserialize
+  allocAndEncode
+  decode
   seekPath
   seekKey
   seekKey2
@@ -571,11 +585,11 @@ jsExport:
   markIdempotent
   getEncodedLength
   getEncodedType
-  "allocAndEncodeIdempotent" = serialize
+  "allocAndEncodeIdempotent" = allocAndEncode
   "isIdempotent" = isBipfBuffer
   iterate
   "types" = typesConstants
   createSeekPath
   createCompareAt
-  "compare" = compareCompat
+  "compare" = compatCompare
 

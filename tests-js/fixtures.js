@@ -14,6 +14,9 @@ tape('fixtures compare', (t) => {
     const bipfBuffer = Buffer.from(bipf.allocAndEncode(jsonValue))
 
     t.equal(bipfBuffer.toString('hex'), f.binary)
+
+    const decoded = bipf.decode(bipfBuffer)
+    t.deepEqual(decoded, jsonValue)
   }
 
   t.end()

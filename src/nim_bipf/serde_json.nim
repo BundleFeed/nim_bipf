@@ -89,7 +89,7 @@ proc parseHook*(s: SomeInputString, i: var int, v: var NodeContext) =
       eatSpace(s, i)
       if i < s.len and s[i] == '}':
         break
-      var mapEntry = KeyedNodeContext(b: builder)
+      var mapEntry = KeyedNodeContext[typeof(v.b)](b: builder)
       parseHook(s, i, mapEntry.key)
       eatChar(s, i, ':')
       parseHook(s, i, mapEntry)
@@ -118,7 +118,7 @@ proc parseHook*(s: SomeInputString, i: var int, v: var NodeContext) =
       eatSpace(s, i)
       if i < s.len and s[i] == ']':
         break
-      var element = NonKeyedNodeContext(b: builder)
+      var element = NonKeyedNodeContext[typeof(v.b)](b: builder)
       parseHook(s, i, element)
       eatSpace(s, i)
       if i < s.len and s[i] == ',':
@@ -190,7 +190,7 @@ proc parseHook*(s: SomeInputString, i: var int, v: var NodeContext) =
   
 proc addJson*(b: var BipfBuilder, input: sink openArray[char]) =
 
-  var ctx = NonKeyedNodeContext(b: b)
+  var ctx = NonKeyedNodeContext[typeof(b)](b: b)
   var i = 0
   parseHook(input, i, ctx)
 

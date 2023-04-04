@@ -2,7 +2,7 @@ const tape = require('tape')
 const bipf = require('../')
 
 function encode(value) {
-  const buf = bipf.serialize(value)
+  const buf = bipf.allocAndEncode(value)
   return buf
 }
 

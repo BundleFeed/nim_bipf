@@ -57,13 +57,12 @@ suite "BIPF":
 
         builder.addJsonNode(fixture.json)
 
-        var encoded = newByteBuffer(builder.encodingSize)
-        builder.finish(encoded)
+        var encoded = builder.finish()
         
         let len = encoded.len
 
         check len == fixture.binary.len              
-        check seq[byte](encoded) == fixture.binary
+        check seq[byte](encoded.buffer) == fixture.binary
 
   test "atom demo":
     var builder = newBipfBuilder[NimContext](DEFAULT_CONTEXT)
@@ -74,8 +73,7 @@ suite "BIPF":
     builder.addString("key2", "Bar")
     builder.endMap()
 
-    var encoded = newByteBuffer(builder.encodingSize)
-    builder.finish(encoded)
+    var encoded = builder.finish()
 
 
     debug "encoded without keyDict: ", encoded.repr
@@ -89,8 +87,7 @@ suite "BIPF":
     builder2.addString(AtomValue(4), "Bar")
     builder2.endMap()
 
-    var encoded2 = newByteBuffer(builder.encodingSize)
-    builder2.finish(encoded2)
+    var encoded2 = builder2.finish()
 
     debug "encoded using a keyDict: ", encoded2.repr
     debug "length: ", encoded2.len

@@ -18,62 +18,37 @@
 
 BIPF is a binary format for data interchange, designed to be compact and fast to parse.
 
-This library provides a Nim implementation of BIPF, with support for both reading and writing.
+This library provides a Nim implementation of BIPF, with support for both reading, writing, searching.
 
-## Usage
+*Status*: Work in progress, prefer pointing to the github repository for now in the requires section of your nimble file.
 
-### Writing
+# Backends
 
-```nim
-import bipf
+- [x] Nim library
+- [x] Pure JS library (to deploy in the browser use NodeJs Buffer polyfill or some packager)
+- [x] Compatibility layer with https://www.npmjs.com/package/bipf (pass all tests but those that are not compliant with the spec in this implementation) 
+- [x] NodeJs Module (build with cmake-js)
+- [ ] WebAssembly Module
 
-var w = newBipfWriter()
-w.writeMap()
-w.writeKey("hello")
-w.writeStr("world")
-w.writeKey("answer")
-w.writeInt(42)
-w.writeKey("pi")
-w.writeFloat(3.141592)
-w.writeKey("array")
-w.writeArray()
-w.writeInt(1)
-w.writeInt(2)
-w.writeInt(3)
-w.writeInt(4)
-w.writeInt(5)
-w.writeEnd()
-w.writeKey("object")
-w.writeMap()
-w.writeKey("a")
-w.writeInt(1)
-w.writeKey("b")
-w.writeInt(2)
-w.writeKey("c")
-w.writeInt(3)
-w.writeEnd()
-w.writeEnd()
+## Performance
 
-echo w.result()
+### For JS
+A benchmark is available in the `tests-js` folder.  To run it:
+
+```bash
+nimble benchJs
 ```
 
-### Reading
+or 
 
-```nim
-import bipf
-
-var r = newBipfReader(w.result())
-r.readMap()
-while r.next():
-  echo r.key()
-  case r.kind()
-  of BIPF_INT: echo r.readInt()
-  of BIPF_STR: echo r.readStr()
-  of BIPF_FLOAT: echo r.readFloat()
-  of BIPF_ARRAY: r.skip()
-  of BIPF_MAP: r.skip()
-  else: echo "unknown type"
+```bash
+npm run benchmark
 ```
+
+It compares the performances of 
+- the reference JS implementation: https://www.npmjs.com/package/bipf
+- Nim implementation compiled to JS backend
+- Nim implementation compiled to NodeJs Module 
 
 ## License
 

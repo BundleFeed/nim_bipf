@@ -10,25 +10,24 @@
     "bindings": "^1.5.0"
   },
   "devDependencies": {
-    "benchmark": "^2.1.4",
     "benchmarkify": "^3.0.0",
-    "benchtable": "^0.1.0",
     "bipf": "^1.9.0",
     "bipf-spec": "^0.1.0",
+    "cmake-js": "^7.2.1",
     "faker": "^5.5.1",
     "husky": "^4.3.8",
     "microtime": "^3.1.1",
     "nyc": "^15.1.0",
     "prettier": "^2.1.2",
     "pretty-quick": "^3.1.0",
+    "ssb-fixtures": "^4.0.1",
     "tap-arc": "~0.3.4",
-    "tape": "^5.3.1",
-    "cmake-js": "^7.2.1",
-    "ssb-fixtures": "^4.0.1"
+    "tape": "^5.3.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "benchmark": "node tests-js/perf.js"
+    "test": "npx tape tests-js/index.js | tap-arc && tape tests-js/compare.js | tap-arc && tape tests-js/fixtures.js | tap-arc",
+    "install": "cmake-js compile",
+    "benchmark": "node tests-js/benchmarks.js"
   },
   "author": "Geoffrey Picron",
   "license": "Apache-2.0"

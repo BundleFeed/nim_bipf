@@ -15,12 +15,11 @@
 import std/tables
 
 
+
 when defined(js):
   import private/backend/js
 else:
   import private/backend/c
-
-export lenUTF8
 
 
 type
@@ -49,16 +48,14 @@ type
   BipfPrefix* = distinct uint32
 
   BipfBuffer*[OB] = object
-    buffer: OB
+    buffer*: OB
 
 
-  NoopKeyDict* = ref object
 
-var NOKEYDICT* : NoopKeyDict = nil
   
 const TRUE* = AtomValue(1)
 const FALSE* = AtomValue(0)
-
+const NULL_PREFIX* = BipfPrefix(BipfTag.ATOM)
 
 
 # BipfPrefix helpers
@@ -76,13 +73,12 @@ template `$`*(p: BipfPrefix): string = "(" & $p.tag & "," & $p.size & ")"
 # BipfBuffer helpers
 
 template len*(bipf: BipfBuffer): int = bipf.buffer.len
-template readPrefix*[B](bipf: B, p: var int): BipfPrefix = BipfPrefix(readVaruint32(bipf.buffer, p)) 
+template readPrefix*[ByteBuffer](buffer: ByteBuffer, p: var int): BipfPrefix = BipfPrefix(readVaruint32(buffer, p)) 
 
-func skipNext*(bipf: BipfBuffer, p: var int) {.inline.} =
+
+func skipNext*[ByteBuffer](bipf: ByteBuffer, p: var int) {.inline.} =
   let prefix = bipf.readPrefix(p)
   p += prefix.size
-
-template copyBipfBuffer*[B](result: var B, s: BipfBuffer[B], p: var int) = copyBuffer(result, s.buffer, p)
 
 # ------------------------------
 

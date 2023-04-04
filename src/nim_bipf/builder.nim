@@ -63,12 +63,12 @@ type
   BuilderCtx =  concept ctx
     ctx.inputBufferType is typedesc
 
-  BipfBuilderObj[Ctx: BuilderCtx; I] = object
+  BipfBuilderObj[Ctx: BuilderCtx; I; O] = object
     stack    : seq[StackValue[I]]
     pointers : seq[int]
     ctx*     : Ctx
   
-  BipfBuilder*[Ctx: BuilderCtx; I] = ref BipfBuilderObj[Ctx, I]
+  BipfBuilder*[Ctx: BuilderCtx; I; O] = ref BipfBuilderObj[Ctx, I, O]
 
 
 type
@@ -109,19 +109,10 @@ const NULL = NULLTYPE(0)
 
 
 template tagLen(v: int): int =
-  assert v >= 0 and v <= high(int32)
+  assert v >= 0 and v <= high(int32), "Value out of range:" & $v
   
   let u = v.uint32 shl 3
-  if u < 0x80:
-    1
-  elif u < 0x4000:
-    2
-  elif u < 0x200000:
-    3
-  elif u < 0x10000000:
-    4
-  else:
-    5
+  lenVaruint32(u)
 
   
 
@@ -209,9 +200,9 @@ template addKeyedValueToStack(b: BipfBuilder, key: cstring | string | AtomValue,
       raise newException(BipfValueError, "Cannot add a value with a key in an array")
 
 
-func newBipfBuilder*[Ctx: BuilderCtx](ctx: Ctx): BipfBuilder[Ctx, ctx.inputBufferType] =
+func newBipfBuilder*[Ctx: BuilderCtx](ctx: Ctx): BipfBuilder[Ctx, ctx.inputBufferType, ctx.outputBufferType] =
   ## Creates a new BipfWriter.
-  result = BipfBuilder[Ctx, ctx.inputBufferType](ctx: ctx)
+  result = BipfBuilder[Ctx, ctx.inputBufferType, ctx.outputBufferType](ctx: ctx)
 
 func startMap*(b: var BipfBuilder)  {.inline.} =
   ## Starts a new map at root or in an array.
@@ -429,35 +420,36 @@ const mapTagCode : array[StackValueTag, uint32] =
 
 
 
-func finish*[Ctx: BuilderCtx, InputBuffer, O](b: var BipfBuilder[Ctx, InputBuffer], buffer: var O) =
+func finish*[Ctx: BuilderCtx, InputBuffer, OutputBuffer](b: var BipfBuilder[Ctx, InputBuffer, OutputBuffer]) : BipfBuffer[OutputBuffer] =
+  result.buffer = b.ctx.allocBuffer(b.encodingSize)
   ## Finishes the current bipf document and returns the result.
   var p = 0
   for sv in b.stack:
     if unlikely(sv.tag == svtBIPF_BUFFER):
-      buffer.copyBipfBuffer(sv.bipf, p)
+      result.buffer.copyBuffer(sv.bipf.buffer, p)
     else:
       let tagCode = mapTagCode[sv.tag]
       let tag = tagCode.uint32 + sv.encodedSize.uint32 shl 3
-      writeVaruint32(buffer, tag, p)
+      writeVaruint32(result.buffer, tag, p)
       case sv.tag:
         of svtOBJECT, svtARRAY:
           discard
         of svtINT:
-          buffer.writeInt32LittleEndian(sv.i, p)
+          result.buffer.writeInt32LittleEndian(sv.i, p)
         of svtDOUBLE:
-          buffer.writeFloat64LittleEndian(sv.d, p)
+          result.buffer.writeFloat64LittleEndian(sv.d, p)
         of svtATOM:
-          buffer.writeUInt32LittleEndianTrim(uint32(sv.b), p)
+          result.buffer.writeUInt32LittleEndianTrim(uint32(sv.b), p)
         of svtNULL:
           discard
         of svtSTRING:
-          buffer.writeUtf8(sv.str, p)
+          result.buffer.writeUtf8(sv.str, p)
         of svtCSTRING:
-          buffer.writeUtf8(sv.cstr, p)
+          result.buffer.writeUtf8(sv.cstr, p)
         of svtEXTENDED:
-          buffer.copyBuffer(sv.ext, p)
+          result.buffer.copyBuffer(sv.ext, p)
         of svtBUFFER:
-          buffer.copyBuffer(sv.buf, p)
+          result.buffer.copyBuffer(sv.buf, p)
         of svtBIPF_BUFFER:
           discard
 

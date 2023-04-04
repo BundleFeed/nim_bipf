@@ -27,10 +27,11 @@ type
 const DEFAULT_CONTEXT* = NimContext(0)
 
 template inputBufferType*(ctx: NimContext): typedesc = ByteBuffer
+template outputBufferType*(ctx: NimContext): typedesc = ByteBuffer
 
 ## ByteBuffer API
 
-template newByteBuffer*(size: int): ByteBuffer = ByteBuffer(newSeq[byte](size))
+template allocBuffer*(ctx: NimContext, size: int): ByteBuffer = ByteBuffer(newSeq[byte](size))
 func len*(x: ByteBuffer): int {.borrow.}
 template `[]=`*(v: var ByteBuffer, i: int, b: byte) = (seq[byte](v))[i] = b
 template `[]`*(v: ByteBuffer, i: int): byte = (seq[byte](v))[i]

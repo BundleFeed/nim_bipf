@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var BenchTable = require('benchtable');
 var faker = require('faker')
-var nim_bipf = require('../')
+var nim_bipf = require('../dist/nim_bipf.js')
+//var nim_bipf_v2 = require('../dist/nim_bipf_v2.js')
 var bipf = require('bipf')
 var fs = require('fs')
 var nim_bipf_node = require('../dist/nim_bipf_node.js')
@@ -115,6 +115,7 @@ var keyDict = nim_bipf.newKeyDict()
 
 console.log('fixtureMessages (500 authors) of ' + fixtureMessages.length + ' messages')
 var encodedSsbMessages = fixtureMessages.map(msg => bipf.allocAndEncode(msg))
+//var encodedSsbMessagesV2 = fixtureMessages.map(msg => nim_bipf_v2.allocAndEncode(msg))
 
 
 var b = bipf.allocAndEncode(fakeData)
@@ -131,7 +132,14 @@ while (false) {
 
 
 const tape = require('tape')
+
 /*
+tape('nim_bipf_v2#encode/nim_bipf_v2#decode', function (t) {
+    var  encodeDecode = nim_bipf_v2.decode(nim_bipf_v2.allocAndEncode(fakeData))
+    t.deepEqual(encodeDecode, fakeData)
+    t.end()
+})
+
 tape('bipf#encode/decode', function (t) {
     var  encodeDecode = bipf.decode(bipf.allocAndEncode(fakeData))
     t.deepEqual(encodeDecode, fakeData)
@@ -202,43 +210,6 @@ data["ssb messages from ssb-fixture"] = fixtureMessages
 
 console.log('ssbMessages sample of ' + ssbMessages.length + ' messages')
 
-function roughSizeOfObject( object ) {
-
-    var objectList = [];
-
-    var recurse = function( value )
-    {
-        var bytes = 0;
-
-        if ( typeof value === 'boolean' ) {
-            bytes = 4;
-        }
-        else if ( typeof value === 'string' ) {
-            bytes = value.length * 2;
-        }
-        else if ( typeof value === 'number' ) {
-            bytes = 8;
-        }
-        else if
-        (
-            typeof value === 'object'
-            && objectList.indexOf( value ) === -1
-        )
-        {
-            objectList[ objectList.length ] = value;
-
-            for( i in value ) {
-                bytes+= 8; // an assumed existence overhead
-                bytes+= recurse( value[i] )
-            }
-        }
-
-        return bytes;
-    }
-
-    return recurse( object );
-}
-
 var dataIndex = 0
 
 for (let i in data) {
@@ -260,15 +231,23 @@ for (let i in data) {
         let j = dataIndex++ % b.length
         nim_bipf.serialize(b[j], keyDict)
     })
+    // suite.add('nim_bipf_v2#serialize/' + i, function () {
+    //     let j = dataIndex++ % b.length
+    //     nim_bipf_v2.serialize(b[j])
+    // })
+    // suite.add('nim_bipf_v2#serializeWithKeyDict/' + i, function () {
+    //     let j = dataIndex++ % b.length
+    //     nim_bipf_v2.serialize(b[j], keyDict)
+    // })
     suite.add('nim_bipf_node#serialize/' + i, function () {
-        let j = dataIndex++ % b.length
-        nim_bipf_node.serialize(b[j])
+         let j = dataIndex++ % b.length
+         nim_bipf_node.serialize(b[j])
     })
     suite.add('json#stringify/' + i, function () {
         let j = dataIndex++ % b.length
         JSON.stringify(b[j])
     })
-    suites.push(suite)
+    //suites.push(suite)
 }
 
 
@@ -285,6 +264,16 @@ for (let i in data) {
     bipfDataWithKeyDict[i] = data[i].map(e => nim_bipf.serialize(e, keyDict))
 }
 
+// let bipfV2Data = {}
+// for (let i in data) {
+//     bipfV2Data[i] = data[i].map(e => nim_bipf_v2.serialize(e))
+// }
+
+// let bipfV2DataWithKeyDict = {}
+// for (let i in data) {
+//     bipfV2DataWithKeyDict[i] = data[i].map(e => nim_bipf_v2.serialize(e, keyDict))
+// }
+
 let jsonStrings = {}
 for (let i in data) {
     jsonStrings[i] = data[i].map(e => JSON.stringify(e))
@@ -298,6 +287,8 @@ for (let i in data) {
 for (let i in bipfData) {
     let b = bipfData[i]
     let bk = bipfDataWithKeyDict[i]
+    // let bv2 = bipfV2Data[i]
+    // let bkv2 = bipfV2DataWithKeyDict[i]
     let json = jsonStrings[i]
     let jb = jsonBuffers[i]
 
@@ -309,7 +300,7 @@ for (let i in bipfData) {
 
     suite.ref('bipf#decode/' + i, function () {
         let j = dataIndex++ % b.length
-        bipf.decode(b[j])
+        bipf.decode(b[j].buffer)
     })
     suite.add('nim_bipf#deserialize/' + i, function () {
         let j = dataIndex++ % b.length
@@ -319,6 +310,14 @@ for (let i in bipfData) {
         let j = dataIndex++ % b.length
         nim_bipf.deserialize(bk[j], keyDict)
     })
+    // suite.add('nim_bipf_v2#deserialize/' + i, function () {
+    //     let j = dataIndex++ % b.length
+    //     nim_bipf_v2.deserialize(bv2[j])
+    // })
+    // suite.add('nim_bipf_v2#deserializeWithKeyDict/' + i, function () {
+    //     let j = dataIndex++ % b.length
+    //     nim_bipf_v2.deserialize(bkv2[j], keyDict)
+    // })
     suite.add('nim_bipf_node#deserialize/' + i, function () {
         let j = dataIndex++ % b.length
         nim_bipf_node.deserialize(b[j])
@@ -332,11 +331,12 @@ for (let i in bipfData) {
         let j = dataIndex++ % b.length
         JSON.parse(jb[j].toString())
     })
-    suites.push(suite)
+    //suites.push(suite)
 }
 
 for (let i in bipfData) {
     let b = bipfData[i]
+    // let bv2 = bipfV2Data[i]
     let json = jsonStrings[i]
     let jb = jsonBuffers[i]
 
@@ -384,8 +384,8 @@ for (let i in bipfData) {
 var b = bipf.allocAndEncode(pkg)
 var _devDependenciesBuf = Buffer.from('devDependencies')
 var _fakerBuf = Buffer.from('faker')
-var _devDependencies = nim_bipf.serialize('devDependencies')
-var _faker = nim_bipf.serialize('faker')
+var _devDependencies = bipf.allocAndEncode('devDependencies')
+var _faker = bipf.allocAndEncode('faker')
 
 
 var suite2 = bench.createSuite("Seeking data");
@@ -418,12 +418,13 @@ suite2.add('nim_bipf#seekPathBy2SeekKeyCached', function () {
 
 
 var encodedPath = nim_bipf.serialize(['devDependencies', 'faker'])
+// var encodedPathV2 = nim_bipf_v2.serialize(['devDependencies', 'faker'])
 
 var suite3 = bench.createSuite("Seeking path");
 var x = 0
 
 suite3.ref('bipf#seekPath(encoded)', function () {
-    x += bipf.seekPath(b, 0, encodedPath, 0)
+    x += bipf.seekPath(b, 0, encodedPath.buffer, 0)
 })
 
 var compiled = bipf.createSeekPath(['devDependencies', 'faker'])
@@ -433,7 +434,7 @@ suite3.add('bipf#seekPath(compiled)', function () {
 })
 
 suite3.add('nim_bipf#seekPath(encoded)', function () {
-    x += nim_bipf.seekPath(b, 0, encodedPath, 0)
+    x += nim_bipf.seekPath(b, 0, encodedPath.buffer, 0)
 })
 
 var compiledNim = nim_bipf.createSeekPath(['devDependencies', 'faker'])
@@ -441,6 +442,21 @@ var compiledNim = nim_bipf.createSeekPath(['devDependencies', 'faker'])
 suite3.add('nim_bipf#seekPath(compiled)', function () {
     x += compiledNim(b, 0)
 })
+
+// var bv2 = nim_bipf_v2.allocAndEncode(pkg)
+
+// suite3.add('nim_bipf_v2#seekPath(encoded)', function () {
+//     x += nim_bipf_v2.seekPath(bv2, 0, encodedPathV2.buffer, 0)
+// })
+
+// var compiledNimV2 = nim_bipf_v2.createSeekPath(['devDependencies', 'faker'])
+
+// suite3.add('nim_bipf_v2#seekPath(compiled)', function () {
+//     x += compiledNimV2(bv2, 0)
+// })
+// suite3.add('nim_bipf_v2#seekPath(compiled) - run2', function () {
+//     x += compiledNimV2(bv2, 0)
+// })
 
 var pPath = nim_bipf_node.compileSimpleBPath(['devDependencies', 'faker'])
 
@@ -508,7 +524,27 @@ suite4.add('nim_bipf#jsArray[bipf]/seekPath(compiled)', function () {
     //console.log(result.length)
 })
 
-var pPath = nim_bipf_node.compileSimpleBPath(['devDependencies', 'faker'])
+// var compiledNimV2 = nim_bipf_v2.createSeekPath(['value', 'content', 'type'])
+
+// suite4.add('nim_bipf_v2#jsArray[bipf]/seekPath(compiled)', function () {
+//     var count = 0
+//     var result = []
+//     var i = 0
+//     while (count < 100 && i < encodedSsbMessagesV2.length) {
+//         var p = compiledNimV2(encodedSsbMessagesV2[i], 0)
+//         if (p != -1) {
+//             var match = contactInBipf.compare(encodedSsbMessagesV2[i], p, p + contactInBipf.length) === 0    
+//             if (match) {
+//                 count++
+//                 result.push(encodedSsbMessagesV2[i])
+//             }
+//         }
+//         i++
+//     }
+//     //console.log(result.length)
+// })
+
+var pPath = nim_bipf_node.compileSimpleBPath(['value', 'content', 'type'])
 
 
 suite4.add('nim_bipf_node#jsArray[bipf]/seekPath(compiled)', function () {

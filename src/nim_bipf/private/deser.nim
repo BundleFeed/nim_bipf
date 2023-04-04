@@ -69,8 +69,8 @@ proc deserializeArray[Ctx](ctx: var Ctx, buffer: ctx.bufferType, p: var int, siz
 
 
 
-proc deserialize*[Ctx](ctx: var Ctx, buffer: ctx.bufferType, at: int = 0): ctx.nodeType {.inline.} =
+proc deserialize*[Ctx](ctx: var Ctx, bipf: BipfBuffer[ctx.bufferType], at: int = 0): ctx.nodeType {.inline.} =
   var p = at
-  result = deserializeNext[Ctx](ctx, buffer, p)
+  result = deserializeNext[Ctx](ctx, bipf.buffer, p)
 
 {.pop.}

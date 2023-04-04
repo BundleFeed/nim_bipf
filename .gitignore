@@ -2,3 +2,6 @@ build
 node_modules
 tests/test1
 src/nim_bipf.out
+tests/bench_encode
+tests/test_builder
+tests/test_bytebuffer

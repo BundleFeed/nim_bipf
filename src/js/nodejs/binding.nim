@@ -22,6 +22,7 @@ addHandler(consoleLog)
 import ../../nim_bipf/common
 import ../../nim_bipf/builder
 import ../../nim_bipf/serde_json
+import ../../nim_bipf/private/backend/c
 import ../../nim_bipf/private/deser
 import ../../nim_bipf/private/varint
 import ../../nim_bipf/private/logging as traceLogging
@@ -29,20 +30,17 @@ import ../../nim_bipf/bpath
 
 # Napi helpers for encoding Bipf
 
-converter toInt(n: napi_value): int32            {.inline.} = n.getInt32()
-converter toDouble(n: napi_value): float64       {.inline.} = n.getFloat64()
-converter toString(n: napi_value): string        {.inline.} = n.getStr()
-converter toBool(n: napi_value): bool            {.inline.} = n.getBool()
-converter toBuffer(n: napi_value): ByteBuffer    {.inline.} = 
-  let (arrType, length, data, arrayBuffer, byteOffset) = getTypedArrayInfo(n)
-  
-  result = ByteBuffer(newSeq[byte](length))
-  let target = addr seq[byte](result)[0]
-  copyMem(target, data, length)
-converter toAtom(n: napi_value): AtomValue       {.inline.} = raise newException(ValueError, "not implemented")
+
+converter toInt32(n: napi_value): int32             {.inline.} = n.getInt32()
+converter toDouble(n: napi_value): float64          {.inline.} = n.getFloat64()
+converter toString(n: napi_value): string           {.inline.} = n.getStr()
+converter toBool*(n: napi_value): bool              {.inline.} = n.getBool()
+converter toInputBuffer(n: napi_value): ByteBuffer              {.inline.} = raise newException(ValueError, "not implemented")
+converter toAtom(n: napi_value): AtomValue                      {.inline.} = raise newException(ValueError, "not implemented")
+converter toBipfBuffer(n: napi_value): BipfBuffer[ByteBuffer]   {.inline.} = raise newException(ValueError, "not implemented")
 
 
-converter toBipfBuffer(n: napi_value): BipfBuffer {.inline.} = cast[BipfBuffer](n)
+
 
 
 template dnItems(n: napi_value): napi_value = n.items
@@ -89,52 +87,52 @@ proc dnKind(obj: napi_value): DynNodeKind {.inline.} =
     
     
 proc addNapiValue*(b: var BipfBuilder, key: sink string, node: sink napi_value) {.inline.} =
-  addNodeWithKey(b, key, node, NOKEYDICT)
+  addNodeWithKey(b, key, node)
 
 proc addNapiValue*(b: var BipfBuilder, node: sink napi_value) {.inline.} =
-  addNode(b, node, string, NOKEYDICT)
+  addNode(b, node)
 
 # Napi helper for decoding Bipf
 
 type 
-  JsObjectFactory = napi_env
-template bufferType(ctx: JsObjectFactory): typedesc = NapiBuffer
-template nodeType(ctx: JsObjectFactory): typedesc = napi_value
+  NapiDeserCtx = napi_env
+template bufferType(ctx: NapiDeserCtx): typedesc = NapiBuffer
+template nodeType(ctx: NapiDeserCtx): typedesc = napi_value
   
 
-template newMap(factory: JsObjectFactory): napi_value = factory.createObject()
-template newArray(factory: JsObjectFactory, arr: sink seq[napi_value]): napi_value = factory.create(arr)
-template setEntry(factory: JsObjectFactory, map: napi_value, key: napi_value, value: napi_value) = factory.setProperty(map, key, value)
-template setElement(factory: JsObjectFactory, arr: napi_value, idx: int, value: napi_value) = factory.setElement(arr, idx.uint32, value)
+template newMap(factory: NapiDeserCtx): napi_value = factory.createObject()
+template newArray(factory: NapiDeserCtx, arr: sink seq[napi_value]): napi_value = factory.create(arr)
+template setEntry(factory: NapiDeserCtx, map: napi_value, key: napi_value, value: napi_value) = factory.setProperty(map, key, value)
+template setElement(factory: NapiDeserCtx, arr: napi_value, idx: int, value: napi_value) = factory.setElement(arr, idx.uint32, value)
 
 template readPrefix*(buffer: NapiBuffer, p: var int): BipfPrefix = BipfPrefix(readVaruint32(buffer, p))    
 template readPrefix*(buffer: openArray[byte], p: var int): BipfPrefix = BipfPrefix(readVaruint32(buffer, p))    
 
-template readStringNode*(factory: JsObjectFactory, source: NapiBuffer, p: var int, l: int): napi_value =
+template readStringNode*(factory: NapiDeserCtx, source: NapiBuffer, p: var int, l: int): napi_value =
   let start = p
   p += l
   factory.createString(source.view(start, l))
 
-template readBufferNode*(factory: JsObjectFactory, source: NapiBuffer, p: var int, l: int): napi_value =
+template readBufferNode*(factory: NapiDeserCtx, source: NapiBuffer, p: var int, l: int): napi_value =
   let start = p
   p += l
   factory.createBuffer(source.view(start, l))
 
-template readIntNode*(factory: JsObjectFactory, source: NapiBuffer, p: var int, l: int): napi_value =
+template readIntNode*(factory: NapiDeserCtx, source: NapiBuffer, p: var int, l: int): napi_value =
   let pInt = source.address(p)
   var i : int32
   littleEndian32(addr i, cast[ptr uint32](pInt))
   p += l
   factory.create(i)
 
-template readDoubleNode*(factory: JsObjectFactory, source: NapiBuffer, p: var int, l: int): napi_value =
+template readDoubleNode*(factory: NapiDeserCtx, source: NapiBuffer, p: var int, l: int): napi_value =
   let pDouble = source.address(p)
   var d : float64
   littleEndian64(addr d, cast[ptr float64](pDouble))
   p += l
   factory.create(d)
 
-template readAtomNode*(factory: JsObjectFactory, source: NapiBuffer, p: var int, l: int): napi_value =
+template readAtomNode*(factory: NapiDeserCtx, source: NapiBuffer, p: var int, l: int): napi_value =
   if (l == 0):
     factory.getNull()
   elif (l == 1):
@@ -147,7 +145,7 @@ template readAtomNode*(factory: JsObjectFactory, source: NapiBuffer, p: var int,
   else:
     raise newException(ValueError, "invalid bool null node (formelly 'invalid boolnull, length must = 1')")
 
-func equals(a: NapiBuffer, b: string, p: int): bool =
+func equals(a: ByteBuffer | NapiBuffer, b: string, p: int): bool =
   if a.len - p < b.len:
     return false
   for i in 0 ..< b.len:
@@ -155,30 +153,20 @@ func equals(a: NapiBuffer, b: string, p: int): bool =
       return false
   return true
 
-func equals(a: openArray[byte], b: string, p: int): bool =
-  trace "equals(a: openArray[byte], b: string, p: int) ", a.repr, " ", b.repr, " ", $p
-  if a.len - p < b.len:
-    return false
-  for i in 0 ..< b.len:
-    if a[p + i] != byte(b[i]):
-      return false
-  return true
   
-  
-proc deserialize(factory: var JsObjectFactory, buffer: NapiBuffer, start: int): napi_value =
-  deserialize[JsObjectFactory](factory, buffer, start)
+proc deserialize(factory: var NapiDeserCtx, buffer: NapiBuffer, start: int): napi_value =
+  deserialize[NapiDeserCtx](factory, BipfBuffer[NapiBuffer](buffer: buffer), start)
 
 
 
-var db : seq[seq[byte]] = @[]
+var db : seq[BipfBuffer[ByteBuffer]] = @[]
 
-template match(msg: seq[byte], value: BipfBuffer, at: int): bool =
-  var result = true
+func match(msg: ByteBuffer, value: BipfBuffer, at: int): bool =
+  result = true
   for j in 0..<value.len:
-    if msg[at + j] != value[j]:
+    if msg[at + j] != value.buffer[j]:
       result = false
-      break;
-  result
+      break
 
 
 init proc(exports: Module) =
@@ -189,13 +177,15 @@ init proc(exports: Module) =
   exports.registerFn(1, "serialize"):
     try:
       let node = args[0]
-      var b = BipfBuilder()
+      var b = newBipfBuilder[NimContext](DEFAULT_CONTEXT)
       b.addNapiValue(node)
       let size = b.encodingSize()
+      
+      var bipf = b.finish()
+
       var sharedBuffer = SharedBuffer(data: newSeq[byte](size))
-      
-      b.finish(ByteBuffer(sharedBuffer.data))
-      
+      copyMem(sharedBuffer.data[0].addr, bipf.buffer[0].addr, size)
+
       return napiCreateSharedBuffer(sharedBuffer)
     except Exception as e:
       error "error in serialize:", e.msg, e.getStackTrace() 
@@ -219,7 +209,7 @@ init proc(exports: Module) =
     try:
       assert args.len == 1
 
-      var builder = newBipfBuilder()
+      var builder = newBipfBuilder[NimContext](DEFAULT_CONTEXT)
       if args[0].kind == napi_string:                    
         builder.addJson(args[0].getStr)
       elif isBuffer(args[0]):
@@ -231,9 +221,11 @@ init proc(exports: Module) =
     
       
       let size = builder.encodingSize()
-      var sharedBuffer = SharedBuffer(data: newSeq[byte](size))
+      var bipf = builder.finish()
 
-      builder.finish(ByteBuffer(sharedBuffer.data))
+      var sharedBuffer = SharedBuffer(data: newSeq[byte](size))
+      copyMem(sharedBuffer.data[0].addr, bipf.buffer[0].addr, size)
+
 
       return napiCreateSharedBuffer(sharedBuffer)
     except Exception as e:
@@ -264,7 +256,7 @@ init proc(exports: Module) =
       args[1].getRef(path)
       let start = if args.len == 3: args[2].getInt32() else: 0
 
-      let r = runBPath(buffer, path[], start)      
+      let r = runBPath(BipfBuffer[NapiBuffer](buffer: buffer), path[], start)      
       return napiCreate(r)
     
     except Exception as e:
@@ -275,21 +267,21 @@ init proc(exports: Module) =
       assert args.len == 1
 
       let arrLen = args[0].len
-      db = newSeq[seq[byte]](arrLen)
+      db = newSeq[BipfBuffer[ByteBuffer]](arrLen)
       for i in 0 ..< arrLen:
         let b = args[0].getElement(i).getBuffer()
-        var stored = newSeq[byte](b.len)
+        var stored = allocBuffer(DEFAULT_CONTEXT, b.len)
         for i in 0 ..< b.len:
           stored[i] = b[i]
 
-        db[i] = stored
+        db[i] =  BipfBuffer[ByteBuffer](buffer: stored)
     
     except Exception as e:
       napiThrowError(e)
       
   exports.registerFn(1, "searchContacts"):
     try:
-      var b = BipfBuilder()
+      var b = newBipfBuilder[NimContext](DEFAULT_CONTEXT)
       b.addString("contact")
       let contactVal = b.finish()
 
@@ -303,7 +295,7 @@ init proc(exports: Module) =
         if r == -1:
           continue
 
-        if match(msg, contactVal, r):
+        if match(msg.buffer, contactVal, r):
           count.inc
           if count == 100:
             break

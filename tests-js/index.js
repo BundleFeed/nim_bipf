@@ -40,10 +40,13 @@ const pkg = {
 
 function testEncodeDecode(value) {
   tape('encode & decode: ' + JSON.stringify(value), (t) => {
-    const buf = Buffer.alloc(bipf.encodingLength(value))
+    const encodingLen = bipf.encodingLength(value)
+    console.log('encoding length:', encodingLen)
+    const buf = Buffer.alloc(encodingLen)
     buf.fill(0, 0, buf.capacity)
     const len = bipf.encode(value, buf, 0)
     console.log('encoded:', buf.slice(0, len))
+    console.log('encoded target:', buf.length)
     //''+jsonString to get 'undefined' string.
     const jsonLen = Buffer.byteLength('' + JSON.stringify(value))
     console.log('length:', len, 'JSON-length:', jsonLen)
@@ -111,6 +114,7 @@ testEncodeDecode({ 1: true })
 tape('seekPath', (t) => {
   const path = ['dependencies', 'varint']
   const pathBuf = bipf.allocAndEncode(path)
+
 
   const pkgBuf = bipf.allocAndEncode(pkg)
 
@@ -209,6 +213,7 @@ tape('seekKey() on an array', (t) => {
 tape('slice() on an object field', (t) => {
   const objEncoded = bipf.allocAndEncode({ x: 'foo', y: 'bar' })
   const pointer = bipf.seekKey(objEncoded, 0, Buffer.from('y', 'utf-8'))
+  console.log("pointer:",pointer)
   const sliced = bipf.slice(objEncoded, pointer)
   t.equal(sliced.toString('utf-8'), 'bar')
   t.end()
@@ -225,9 +230,12 @@ tape('pluck() on an object', (t) => {
 
 tape('encodeIdempotent()', (t) => {
   const buf1 = bipf.allocAndEncode({ address: { street: '123 Main St' } })
+  console.log("buf1:",buf1)
   const streetBipf = bipf.allocAndEncodeIdempotent({ street: '123 Main St' })
+  console.log("streetBipf:",streetBipf)
   t.true(bipf.isIdempotent(streetBipf))
   const buf2 = bipf.allocAndEncode({ address: streetBipf })
+  console.log("buf2:",buf2)
   t.deepEquals(buf1, buf2)
   t.end()
 })

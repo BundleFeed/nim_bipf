@@ -18,8 +18,9 @@ import criterion
 
 var cfg = newDefaultConfig()
 cfg.verbose = true
-cfg.warmupBudget = 5.0
 
+
+import nim_bipf/private/backend/c
 import nim_bipf
 import nim_bipf/serde_json
 import json
@@ -30,8 +31,8 @@ let pkg = parseFile("package.json")
 
 benchmark cfg:
   func simpleEncode(root: JsonNode) : int =
-    var builder = newBipfBuilder()
-    builder.addJson(root)
+    var builder = newBipfBuilder[NimContext](DEFAULT_CONTEXT)
+    builder.addJsonNode(root)
     result = builder.finish().len
 
   iterator argFactory(): JsonNode =
