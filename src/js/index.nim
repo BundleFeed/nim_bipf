@@ -25,7 +25,7 @@ import sequtils
 
 
 import std/jsffi
-import ../../../jsExport.nim/src/jsExport
+import jsExport
 
 
 when not(defined(js)) or not(defined(nodejs)):
