@@ -29,11 +29,12 @@ This library provides a Nim implementation of BIPF, with support for both readin
 - [x] Compatibility layer with https://www.npmjs.com/package/bipf (pass all tests but those that are not compliant with the spec in this implementation) 
 - [x] NodeJs Module (build with cmake-js)
 - [ ] WebAssembly Module
+- [x] Spec pull request implementation [Convert NULLBOOL type to ATOM type](https://github.com/ssbc/bipf-spec/pull/3)
 
 ## Performance
 
-### For JS
-A benchmark is available in the `tests-js` folder.  To run it:
+### For JS 
+A benchmark [(results)](benchmark-result.md) is available in the `tests-js` folder.  To run it:
 
 ```bash
 nimble benchJs

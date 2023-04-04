@@ -247,7 +247,7 @@ for (let i in data) {
         let j = dataIndex++ % b.length
         JSON.stringify(b[j])
     })
-    //suites.push(suite)
+    suites.push(suite)
 }
 
 
@@ -320,7 +320,7 @@ for (let i in bipfData) {
     // })
     suite.add('nim_bipf_node#deserialize/' + i, function () {
         let j = dataIndex++ % b.length
-        nim_bipf_node.deserialize(b[j])
+        nim_bipf_node.deserialize(b[j].buffer)
     })
 
     suite.add('json#parse(string)/' + i, function () {
@@ -331,7 +331,7 @@ for (let i in bipfData) {
         let j = dataIndex++ % b.length
         JSON.parse(jb[j].toString())
     })
-    //suites.push(suite)
+    suites.push(suite)
 }
 
 for (let i in bipfData) {
