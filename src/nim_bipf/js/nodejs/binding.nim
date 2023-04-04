@@ -19,14 +19,14 @@ import std/logging
 var consoleLog = newConsoleLogger(levelThreshold=lvlAll)
 addHandler(consoleLog)
 
-import ../../nim_bipf/common
-import ../../nim_bipf/builder
-import ../../nim_bipf/serde_json
-import ../../nim_bipf/private/backend/c
-import ../../nim_bipf/private/deser
-import ../../nim_bipf/private/varint
-import ../../nim_bipf/private/logging as traceLogging
-import ../../nim_bipf/bpath
+import ../../common
+import ../../builder
+import ../../serde_json
+import ../../private/backend/c
+import ../../private/deser
+import ../../private/varint
+import ../../private/logging as traceLogging
+import ../../bpath
 
 # Napi helpers for encoding Bipf
 

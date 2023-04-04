@@ -12,20 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ../nim_bipf/private/backend/js
-import ../nim_bipf/private/backend/nodebuffer
-import ../nim_bipf/private/deser
-import ../nim_bipf/private/varint
+import ../private/backend/js
+import ../private/backend/nodebuffer
+import ../private/deser
+import ../private/varint
 
-import ../nim_bipf/common
-import ../nim_bipf/builder
-import ../nim_bipf/bpath
+import ../common
+import ../builder
+import ../bpath
 import std/options
 import sequtils
 
 
 import std/jsffi
-import jsExport
 
 
 when not(defined(js)) or not(defined(nodejs)):
@@ -559,10 +558,12 @@ typesConstants["atom"] = BipfTag.ATOM
 typesConstants["extended"] = BipfTag.EXTENDED
 
 
-jsExportTypes:
-  NodeJsBuffer
-  JsBipfBuffer
-  CStringAtomDict
+import jsExport
+
+#jsExportTypes:
+#  NodeJsBuffer
+#  JsBipfBuffer
+#  CStringAtomDict
   
 
 jsExport:
