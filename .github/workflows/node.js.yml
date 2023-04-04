@@ -26,6 +26,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: iffy/install-nim@v4
+      with:
+        version: ${{ matrix.nimversion }}
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
