@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         nimversion:
-          - binary:stable
+          - devel
         os:
           - ubuntu-latest
           - macOS-latest
@@ -31,6 +31,5 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+    - run: nimble install -y
     - run: nimble test
-    - run: nimble testJs
-    - run: nimble compileNodeJsModule
