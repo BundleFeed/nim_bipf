@@ -22,6 +22,21 @@ This library provides a Nim implementation of BIPF, with support for both readin
 
 *Status*: Work in progress, prefer pointing to the github repository for now in the requires section of your nimble file.
 
+# Installation
+For Nim library:
+
+```bash
+nimble install https://github.com/BundleFeed/nim_bipf
+```
+
+For NPM library:
+
+```bash
+npm install nim_bipf
+```
+
+Note: the Node module is not yet published on NPM.  To use it, you need to clone the repository and build it locally using `nimble compileNodeJsModule`.
+
 # Backends
 
 - [x] Nim library
@@ -53,4 +68,14 @@ It compares the performances of
 
 ## License
 
-Apache-2.0
+### Wrapper License
+
+This repository is licensed and distributed under either of
+
+* MIT license: [LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT
+
+or
+
+* Apache License, Version 2.0, ([LICENSE-APACHEv2](LICENSE-APACHEv2) or http://www.apache.org/licenses/LICENSE-2.0)
+
+at your option. This file may not be copied, modified, or distributed except according to those terms.

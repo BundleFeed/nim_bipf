@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+const { assert } = require('console')
+const factory = require('../dist/nim_bipf_wasm_wrapper.js') 
+factory().then(nim_bipf_wasm => {
 
 var faker = require('faker')
 var nim_bipf = require('../dist/nim_bipf.js')
@@ -122,7 +125,7 @@ var keyDict = nim_bipf.newKeyDict()
 
 console.log('fixtureMessages (500 authors) of ' + fixtureMessages.length + ' messages')
 var encodedSsbMessages = fixtureMessages.map(msg => bipf.allocAndEncode(msg))
-//var encodedSsbMessagesV2 = fixtureMessages.map(msg => nim_bipf_v2.allocAndEncode(msg))
+
 
 
 var b = bipf.allocAndEncode(fakeData)
@@ -139,8 +142,20 @@ while (false) {
 
 
 const tape = require('tape')
-
 /*
+tape('nim_bipf#parse and encode/nim_bipf_wasm#json2Bipf', function (t) {
+    var encodedCurrent = nim_bipf.allocAndEncode(JSON.parse(json))
+    var wasmBuffer = nim_bipf_wasm.loadBuffer(jsonBuffer)
+    var encodedWasm = nim_bipf_wasm.parseJson2Bipf(jsonBuffer)
+    var encodedWasm2 = nim_bipf_wasm.parseJson2Bipf(wasmBuffer)
+
+    t.deepEqual(encodedWasm.data().length, encodedCurrent.length)
+    t.deepEqual(encodedWasm2.data().length, encodedCurrent.length)
+    //t.deepEqual(encodedCurrent, encodedWasm)
+    t.end()
+})
+
+
 tape('nim_bipf_v2#encode/nim_bipf_v2#decode', function (t) {
     var  encodeDecode = nim_bipf_v2.decode(nim_bipf_v2.allocAndEncode(fakeData))
     t.deepEqual(encodeDecode, fakeData)
@@ -226,11 +241,11 @@ for (let i in data) {
     suite.setup(function () {
         dataIndex = 0
     })
-    suite.ref('bipf#encode/' + i, function () {
+    suite.add('bipf#encode/' + i, function () {
         let j = dataIndex++ % b.length
         bipf.allocAndEncode(b[j])
     })
-    suite.add('nim_bipf#serialize/' + i, function () {
+    suite.ref('nim_bipf#serialize/' + i, function () {
         let j = dataIndex++ % b.length
         nim_bipf.serialize(b[j])
     })
@@ -256,7 +271,7 @@ for (let i in data) {
         let j = dataIndex++ % b.length
         JSON.stringify(b[j])
     })
-    suites.push(suite)
+    //suites.push(suite)
 }
 
 
@@ -292,6 +307,22 @@ let jsonBuffers = {}
 for (let i in data) {
     jsonBuffers[i] = data[i].map(e => Buffer.from(JSON.stringify(e)))
 }
+let jsonBuffersInWasm = {}
+for (let i in data) {
+    jsonBuffersInWasm[i] =jsonBuffers[i].map(e => nim_bipf_wasm.loadBuffer(e))
+}
+
+// warm up, wasm code take a while to compile
+for (let i = 0; i < 1; i++) {
+    console.log('warm up ' + i)
+    
+    for (let i in data) {
+        jsonBuffers[i].forEach(msg => nim_bipf_node.parseJson2Bipf(msg))
+        jsonBuffers[i].forEach(msg => nim_bipf_wasm.parseJson2Bipf(msg))
+        jsonBuffersInWasm[i].forEach(msg => nim_bipf_wasm.parseJson2Bipf(msg))
+    }
+}
+
 
 for (let i in bipfData) {
     let b = bipfData[i]
@@ -307,11 +338,11 @@ for (let i in bipfData) {
         dataIndex = 0
     })
 
-    suite.ref('bipf#decode/' + i, function () {
+    suite.add('bipf#decode/' + i, function () {
         let j = dataIndex++ % b.length
         bipf.decode(b[j].buffer)
     })
-    suite.add('nim_bipf#deserialize/' + i, function () {
+    suite.ref('nim_bipf#deserialize/' + i, function () {
         let j = dataIndex++ % b.length
         nim_bipf.deserialize(b[j])
     })
@@ -342,7 +373,7 @@ for (let i in bipfData) {
         let j = dataIndex++ % b.length
         JSON.parse(jb[j].toString())
     })
-    suites.push(suite)
+    //suites.push(suite)
 }
 
 for (let i in bipfData) {
@@ -350,13 +381,14 @@ for (let i in bipfData) {
     // let bv2 = bipfV2Data[i]
     let json = jsonStrings[i]
     let jb = jsonBuffers[i]
+    let jbwasm = jsonBuffersInWasm[i]
 
     var suite = bench.createSuite("JSON 2 Bipf " + i + "");
     suite.setup(function () {
         dataIndex = 0
     })
 
-    suite.ref('json#parse(string)/bipf#allocAndEncode' + i, function () {
+    suite.add('json#parse(string)/bipf#allocAndEncode' + i, function () {
         let j = dataIndex++ % b.length
         bipf.allocAndEncode(JSON.parse(json[j]))
     })
@@ -371,26 +403,49 @@ for (let i in bipfData) {
         nim_bipf.serialize(JSON.parse(json[j]))
     })
 
-    suite.add('json#parse(buffer)/nim_bipf#serialize' + i, function () {
+    suite.ref('json#parse(buffer)/nim_bipf#serialize' + i, function () {
         let j = dataIndex++ % b.length
         nim_bipf.serialize(JSON.parse(jb[j].toString()))
     })
     if (nim_bipf_node) {
         suite.add('nim_bipf_node#parseJson2Bipf(string)' + i, function () {
             let j = dataIndex++ % b.length
-            nim_bipf_node.parseJson2Bipf(json[j])
+            var buf = nim_bipf_node.parseJson2Bipf(json[j])
+            if (buf.length != b[j].buffer.length) {
+                throw new Error('length mismatch expected ' + b[j].buffer.length + ' got ' + buf.length + '')
+            }
         })
 
         suite.add('nim_bipf_node#parseJson2Bipf(buffer)' + i, function () {
             let j = dataIndex++ % b.length
-            nim_bipf_node.parseJson2Bipf(jb[j])
+            var buf = nim_bipf_node.parseJson2Bipf(jb[j])
+            if (buf.length != b[j].buffer.length) {
+                throw new Error('length mismatch expected ' + b[j].buffer.length + ' got ' + buf.length + '')
+            }
+
         })
     }
 
-    suites.push(suite)
+    suite.add('nim_bipf_wasm#parseJsonToBipf(buffer)' + i, function () {
+        let j = dataIndex++ % b.length
+        var buf = nim_bipf_wasm.parseJson2Bipf(jb[j]).data()
+        if (buf.length != b[j].buffer.length) {
+            throw new Error('length mismatch expected ' + b[j].buffer.length + ' got ' + buf.length + '')
+        }
+
+    })
+
+    suite.add('nim_bipf_wasm#parseJsonToBipf(buffer in WASM Shared Memory)' + i, function () {
+        let j = dataIndex++ % b.length
+        var buf = nim_bipf_wasm.parseJson2Bipf(jbwasm[j]).data()
+        if (buf.length != b[j].buffer.length) {
+            throw new Error('length mismatch expected ' + b[j].buffer.length + ' got ' + buf.length + '')
+        }
+    })
+
+
+    //suites.push(suite)
 }
-
-
 
 
 var b = bipf.allocAndEncode(pkg)
@@ -477,7 +532,7 @@ if (nim_bipf_node) {
     })
 }
 
-suites.push(suite3)
+//suites.push(suite3)
 
 var suite4 = bench.createSuite("Scanning in memory db (first 100 message of type 'contact')");
 
@@ -577,11 +632,27 @@ if (nim_bipf_node) {
         }
     })
 
+
+    console.log("--- loading db modules ---")
+
     nim_bipf_node.loadDB(encodedSsbMessages)
+    nim_bipf_wasm.loadDB(encodedSsbMessages)
+    console.log(" number of messages: " + encodedSsbMessages.length)
+    console.log(" size in module memory (arr of BIPF) : " + Math.round(nim_bipf_wasm.sizeOfDbInMemory()/1024) + " kilobytes")
+    console.log(" size of index in module memory (index path loc) : " + Math.round(nim_bipf_wasm.sizeOfIndexInMemory()/1024) + " kilobytes")
+    console.log(" size in js memory (array of BIPF)   : " + Math.round(roughSizeOfObject(encodedSsbMessages)/1024) + " kilobytes")
+    console.log(" size in js memory (array of object) : " + Math.round(roughSizeOfObject(fixtureMessages)/1024) + " kilobytes")
 
     suite4.add('nim_bipf_node#inModuleMemory', function () {
         nim_bipf_node.searchContacts()
     })
+    suite4.add('nim_bipf_wasm#inModuleMemory', function () {
+        nim_bipf_wasm.searchContacts()
+    })
+    suite4.add('nim_bipf_wasm#inModuleMemory(with path index)', function () {
+        nim_bipf_wasm.searchContactsWithIndex()
+    })
+
 }
 suites.push(suite4)
 
@@ -590,3 +661,47 @@ suites.push(suite4)
 
 
 bench.run(suites)
+})
+
+
+function roughSizeOfObject( object ) {
+
+    var objectList = [];
+
+    var recurse = function( value )
+    {
+        var bytes = 0;
+
+        if ( typeof value === 'boolean' ) {
+            bytes = 4;
+        }
+        else if ( typeof value === 'string' ) {
+            bytes = value.length * 2;
+        }
+        else if ( typeof value === 'number' ) {
+            bytes = 8;
+        }
+        else if
+        (
+            typeof value === 'object'
+            && objectList.indexOf( value ) === -1
+        )
+        {
+            objectList[ objectList.length ] = value;
+
+            bytes+= 8; // an assumed existence overhead for referencing the object
+            if (Buffer.isBuffer(value)) {
+                bytes += value.byteLength
+            } else {
+                for( i in value ) {
+                    bytes+= recurse( value[i] )
+                }    
+            }
+        }
+
+        return bytes;
+    }
+
+    return recurse( object );
+}
+

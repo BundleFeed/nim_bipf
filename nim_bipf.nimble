@@ -1,9 +1,9 @@
 # Package
 packageName   = "nim_bipf"
-version       = "0.1.1"
+version       = "0.1.2"
 author        = "Geoffrey Picron"
 description   = "BIPF encoding/decoding/transcoding"
-license       = "Apache-2.0"
+license       = "(MIT or Apache-2.0)"
 srcDir        = "src"
 
 
@@ -24,8 +24,9 @@ requires "https://github.com/juancarlospaco/nodejs"
 task compilePureJs, "Compile to pure JS":
   exec "nim js -d:release --app:lib  --rangeChecks:off  --boundChecks:off --sinkInference:on  --out:dist/nim_bipf.js --d:nodejs --mm:orc  src/nim_bipf/js/index.nim"
 
-task compilePureJsV2, "Compile to pure JS - BIPF V2":
-  exec "nim js -d:release --app:lib -d:alt_varint --rangeChecks:off  --boundChecks:off --sinkInference:on  --out:dist/nim_bipf_v2.js --d:nodejs --mm:orc  src/nim_bipf/js/index.nim"
+task compileWasm, "Compile to Wasm Module":
+  exec "nim js -d:release -o:dist/nim_bipf_wasm_wrapper.js  src/nim_bipf/js/wasm/wrapper.nim"
+  exec "nim c -d:danger --app:lib  --threads:off --d:node -d:emscripten --mm:orc --out:dist/nim_bipf_wasm.js src/nim_bipf/js/wasm/binding.nim"
 
 task compilePureJsDebug, "Compile to pure JS (Debug)":
   exec "nim js --app:lib --sinkInference:on  --out:dist/nim_bipf.js --d:nodejs --mm:orc  src/nim_bipf/js/index.nim"
@@ -41,12 +42,11 @@ task benchNim, "Benchmark Nim":
 
 task benchJs, "Benchmark JS":
   compilePureJsTask()
-  compilePureJsV2Task()
   exec "node tests-js/benchmarks.js"
 
 task genNodeJsModuleCCode, "Generate C code for NodeJS module":
   rmDir "dist/src"
-  exec "nim c -c -d:danger --sinkInference:on --passC:-ffast-math --passC:-flto --passL:-flto --mm:orc --nimcache:dist/src src/nim_bipf/js/nodejs/binding.nim"
+  exec "nim c -c -d:danger --threads:off --sinkInference:on --passC:-ffast-math --passC:-flto --passL:-flto --mm:orc --nimcache:dist/src src/nim_bipf/js/nodejs/binding.nim"
 
 task compileNodeJsModule, "Build for NodeJS":
   exec "$HOME/.nimble/bin/node_binding init -n " & $packageName & " -v " & version & " -d \"" & description &  "\" -a \"" & author & "\" -l \"" & license & "\""

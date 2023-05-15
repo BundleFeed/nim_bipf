@@ -1,3 +1,6 @@
+# Copyright 2023 Geoffrey Picron.
+# SPDX-License-Identifier: (MIT or Apache-2.0)
+
 import std/jsffi
 
 type 
@@ -8,6 +11,7 @@ func isNodeJsBuffer*(buffer: JsObject): bool {.importjs: "( Buffer.isBuffer(#) )
 func allocUnsafe*(size: int): NodeJsBuffer {.importjs: "Buffer.allocUnsafe(#)".}
 
 func fromCString*(s: cstring): NodeJsBuffer {.importjs: "Buffer.from(#)".}
+func fromDataView*(s: JsObject): NodeJsBuffer {.importjs: "Buffer.from(#)".}
 func len*(buffer: NodeJsBuffer): int {.importjs: "#.length".}
 func toString*(buffer: NodeJsBuffer, start:int = 0, endExclusive: int = buffer.len): cstring {.importjs: "#.toString('utf8', @)".}
 func subarray*(buffer: NodeJsBuffer, start:int = 0, endExclusive: int = buffer.len): NodeJsBuffer {.importjs: "#.subarray(@)".}

@@ -1,16 +1,5 @@
-# Copyright 2023 Geoffrey Picron
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#     http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright 2023 Geoffrey Picron.
+# SPDX-License-Identifier: (MIT or Apache-2.0)
 
 import node_binding
 import std/endians
@@ -33,7 +22,7 @@ import ../../bpath
 
 converter toInt32(n: napi_value): int32             {.inline.} = n.getInt32()
 converter toDouble(n: napi_value): float64          {.inline.} = n.getFloat64()
-converter toString(n: napi_value): string           {.inline.} = n.getStr()
+converter toString(n: napi_value): string           {.inline.} = $n.getStr()
 converter toBool*(n: napi_value): bool              {.inline.} = n.getBool()
 converter toInputBuffer(n: napi_value): ByteBuffer              {.inline.} = raise newException(ValueError, "not implemented")
 converter toAtom(n: napi_value): AtomValue                      {.inline.} = raise newException(ValueError, "not implemented")
@@ -70,7 +59,7 @@ proc dnKind(obj: napi_value): DynNodeKind {.inline.} =
     of napi_string: result = nkString
     of napi_object: 
       if isTypedArray(obj):
-        let (arrType, x, y, z, zz) = getTypedArrayInfo(obj)
+        let (arrType, _, _, _, _) = getTypedArrayInfo(obj)
 
         if arrType == napi_uint8_array:
           result = nkBuffer
@@ -145,7 +134,7 @@ template readAtomNode*(factory: NapiDeserCtx, source: NapiBuffer, p: var int, l:
   else:
     raise newException(ValueError, "invalid bool null node (formelly 'invalid boolnull, length must = 1')")
 
-func equals(a: ByteBuffer | NapiBuffer, b: string, p: int): bool =
+func equals(a: ByteBuffer | NapiBuffer, b: string | ByteBuffer, p: int): bool =
   if a.len - p < b.len:
     return false
   for i in 0 ..< b.len:
@@ -158,6 +147,20 @@ proc deserialize(factory: var NapiDeserCtx, buffer: NapiBuffer, start: int): nap
   deserialize[NapiDeserCtx](factory, BipfBuffer[NapiBuffer](buffer: buffer), start)
 
 
+
+proc compileQuery2() : auto =   
+  var path : BPath[string] = @[]
+  
+  for key in @["value", "content", "type"].items:
+    let keyPrefix = (key.len.uint32 shl 3) or BipfTag.STRING.uint32
+    path.add BipfQueryOp[string](opCode: MatchKey, prefix: BipfPrefix(keyPrefix), key: key)
+  
+  return path
+
+const SearchContactBPath = compileQuery2()
+
+proc searchTypePos(msg: BipfBuffer[ByteBuffer]) : auto =
+  runBPath(msg, SearchContactBPath, 0)
 
 var db : seq[BipfBuffer[ByteBuffer]] = @[]
 
@@ -184,7 +187,7 @@ init proc(exports: Module) =
       var bipf = b.finish()
 
       var sharedBuffer = SharedBuffer(data: newSeq[byte](size))
-      copyMem(sharedBuffer.data[0].addr, bipf.buffer[0].addr, size)
+      copyMem(sharedBuffer.data[0].addr, string(bipf.buffer)[0].addr, size)
 
       return napiCreateSharedBuffer(sharedBuffer)
     except Exception as e:
@@ -224,7 +227,7 @@ init proc(exports: Module) =
       var bipf = builder.finish()
 
       var sharedBuffer = SharedBuffer(data: newSeq[byte](size))
-      copyMem(sharedBuffer.data[0].addr, bipf.buffer[0].addr, size)
+      copyMem(sharedBuffer.data[0].addr, string(bipf.buffer)[0].addr, size)
 
 
       return napiCreateSharedBuffer(sharedBuffer)
@@ -235,17 +238,22 @@ init proc(exports: Module) =
   exports.registerFn(1, "compileSimpleBPath"):
     try:
       assert args.len == 1
-      var path = newSeqOfCap[string](5)
+      var path = newSeqOfCap[DEFAULT_CONTEXT.outputBufferType](5)
       
       for e in args[0].items:
-        path.add e.getStr
+        let str = e.getStr
+        var b = DEFAULT_CONTEXT.allocBuffer(str.len)
+        var p = 0
+        b.writeUTF8(e, p)
+        path.add b
 
-      let compiled = compileSimplePath(path)
-      var r = new BPathRef[string]
+      let compiled = compileSimplePath(DEFAULT_CONTEXT, path)
+      var r = new BPathRef[DEFAULT_CONTEXT.outputBufferType]
       r[] = compiled
       
       return napiCreateRef(r)
-    except Exception as e:
+    except CatchableError as e:
+      echo e.msg, e.getStackTrace()
       napiThrowError(e)
 
   exports.registerFn(2, "runBPath"):
@@ -285,13 +293,11 @@ init proc(exports: Module) =
       b.addString("contact")
       let contactVal = b.finish()
 
-      let pathToType : BPath[string] = compileSimplePath(@["value", "content", "type"])
-
       var count = 0
       
       for msg in db:
 
-        let r = runBPath(msg, pathToType, 0)
+        let r = searchTypePos(msg)
         if r == -1:
           continue
 

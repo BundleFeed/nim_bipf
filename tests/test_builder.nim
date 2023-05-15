@@ -62,7 +62,15 @@ suite "BIPF":
         let len = encoded.len
 
         check len == fixture.binary.len              
-        check seq[byte](encoded.buffer) == fixture.binary
+        check cast[seq[byte]]((encoded.buffer)) == fixture.binary
+
+  test "decode fixtures":
+    for fixture in tests:
+        debug "decoding fixture: ", fixture.name
+
+        let json = deserializeToJsonNode(BipfBuffer[seq[byte]](buffer: fixture.binary))
+
+        check json == fixture.json
 
   test "atom demo":
     var builder = newBipfBuilder[NimContext](DEFAULT_CONTEXT)

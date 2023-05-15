@@ -1,16 +1,5 @@
-# Copyright 2023 Geoffrey Picron
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#     http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright 2023 Geoffrey Picron.
+# SPDX-License-Identifier: (MIT or Apache-2.0)
 
 import ../private/backend/js
 import ../private/backend/nodebuffer
@@ -299,7 +288,7 @@ proc compileSimplePath(path: openArray[cstring]) : BPath[NodeJsBuffer] =
   var bufArr = newSeq[NodeJsBuffer](path.len)
   for i, p in path:
     bufArr[i] = fromCString(p)
-  result = bpath.compileSimplePath(bufArr)
+  result = bpath.compileSimplePath(DEFAULT_CONTEXT, bufArr)
 
 
 proc seekKey(buffer: NodeJsBuffer, start: int, key: JsObject): int =
@@ -307,7 +296,7 @@ proc seekKey(buffer: NodeJsBuffer, start: int, key: JsObject): int =
                   elif jsTypeOf(key) == "object" and isNodeJsBuffer(key): cast[NodeJsBuffer](key)
                   else: raise newException(ValueError, "Unsupported key type: " & $jsTypeOf(key))
 
-  let bpath = bpath.compileSimplePath([keyBuffer])
+  let bpath = bpath.compileSimplePath(DEFAULT_CONTEXT, [keyBuffer])
 
 
   result = JsBipfBuffer(buffer:buffer).runBPath(bpath, start)
@@ -318,7 +307,7 @@ proc seekKey2(buffer: NodeJsBuffer, start: int, key: NodeJsBuffer, keyStart: int
 
   assert prefix.tag == BipfTag.String, "Invalid path (formely 'seekKey2 require a string bipf'): "  & $prefix.tag  
 
-  let bpath = bpath.compileSimplePath([key.subarray(pTarget, pTarget+prefix.size)])
+  let bpath = bpath.compileSimplePath(DEFAULT_CONTEXT, [key.subarray(pTarget, pTarget+prefix.size)])
 
   result = JsBipfBuffer(buffer:buffer).runBPath(bpath, start)
 
@@ -358,7 +347,7 @@ proc seekPath(buffer: NodeJsBuffer, start: int, target: NodeJsBuffer, targetStar
     pTarget += size
     
 
-  let bpath = bpath.compileSimplePath(path)
+  let bpath = bpath.compileSimplePath(DEFAULT_CONTEXT, path)
 
 
   result = JsBipfBuffer(buffer:buffer).runBPath(bpath, start)

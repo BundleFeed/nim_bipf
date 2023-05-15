@@ -1,16 +1,5 @@
-# Copyright 2023 Geoffrey Picron
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#     http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright 2023 Geoffrey Picron.
+# SPDX-License-Identifier: (MIT or Apache-2.0)
 
 import std/json, common, builder
 import private/backend/c
@@ -173,7 +162,7 @@ proc parseHook*(s: SomeInputString, i: var int, v: var NodeContext) =
       else:
         v.b.addDouble(f)
     else:
-      let i : int64 = parseInt(data)
+      let i : int64 = parseBiggestInt(data)
       if i >= int32.low.int64 and i <= int32.high.int64:
         when typeof(v) is KeyedNodeContext:
           v.b.addInt(v.key, i.int32)
@@ -195,4 +184,96 @@ proc addJson*(b: var BipfBuilder, input: sink openArray[char]) =
   parseHook(input, i, ctx)
 
 
+
+## derialize to JSON
+
+import std/base64
+import ./private/[deser,varint]
+import std/endians
+
+type 
+  DeserCtx = distinct int
+
+var jsonNodeObjectFactory = DeserCtx(0)
+
+template bufferType(ctx: DeserCtx): typedesc = seq[byte]
+template nodeType(ctx: DeserCtx): typedesc = JsonNode
+
+template newMap(factory: DeserCtx): JsonNode = newJObject()
+template newArray(factory: DeserCtx, arr: seq[JsonNode]): JsonNode = 
+  block:
+    var result = newJArray()
+    for n in arr:
+      result.add(n)
+    result
+
+template setEntry(factory: DeserCtx, map: JsonNode, key: string, value: JsonNode) = map[key] = value
+template setElement(factory: DeserCtx, arr: JsonNode, idx: int, value: JsonNode) = arr[idx] = value
+template readPrefix*(buffer: seq[byte], p: var int): BipfPrefix = BipfPrefix(readVaruint32(cast[ByteBuffer](buffer), p)) 
+template readStringNode*(factory: DeserCtx, source: seq[byte], p: var int, l: int): JsonNode =
+  block:
+    if l == 0:
+      newJString("")
+    else:
+      let pend = p + l
+      let result = newJString(cast[string](source[p..<pend]))
+      p = pend
+      result
+
+template readBufferNode*(factory: DeserCtx, source: seq[byte], p: var int, l: int): JsonNode =
+  block:
+    let pend = p + l
+    let result = newJString(base64.encode(cast[string](source[p..<pend])))
+    p = pend
+    result
+
+
+template readIntNode*(factory: DeserCtx, source: seq[byte], p: var int, l: int): JsonNode =
+  block:
+    var r : int32
+    littleEndian32(addr r, unsafeAddr source[p])
+    let result = newJInt(r)
+    p += l
+    result
+
+template readDoubleNode*(factory: DeserCtx, source: seq[byte], p: var int, l: int): JsonNode =
+  block:
+    var r : float64
+    littleEndian64(addr r, unsafeAddr source[p])
+    let result = newJFloat(r)
+    p += l
+    result
+
+template readAtomValue*(factory: DeserCtx, source: seq[byte], p: var int, l: int): AtomValue =
+  let len = l
+  var result = case len
+              of 0: AtomValue(-1)
+              of 1: AtomValue(source[p].uint32)
+              of 2: 
+                var r : uint16
+                littleEndian16(addr r, unsafeAddr source[p])
+                AtomValue(r.uint32)
+              of 3: AtomValue((source[p].uint32 shl 16) or (source[p+1].uint32 shl 8) or source[p+2].uint32)
+              of 4: 
+                var r : uint32
+                littleEndian32(addr r, unsafeAddr source[p])
+                AtomValue(r)
+              else:
+                raise newException(ValueError, "Invalid length for Atom value (must be 0, 1, 2, 3 or 4). Got: " & $len)
+  p += len
+  result
+
+template readAtomNode*(factory: DeserCtx, source: seq[byte], p: var int, l: int): JsonNode =
+  block:
+    let result = readAtomValue(factory, source, p, l)
+    case result.int:
+    of -1: newJNull()
+    of 0: newJBool(false)
+    of 1: newJBool(true)
+    else:
+      raise newException(ValueError, "Invalid Atom value (must be 0 or 1). Got: " & $result.int)
+
+
+proc deserializeToJsonNode*(bipf: BipfBuffer[seq[byte]], start = 0): JsonNode =
+  deserialize[DeserCtx](jsonNodeObjectFactory, bipf, start)
 
