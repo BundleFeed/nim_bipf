@@ -16,7 +16,7 @@ requires "https://github.com/gpicron/jsExport.nim >= 0.0.2"
 requires "chronicles >= 0.10.3"
 requires "https://github.com/disruptek/criterion"
 requires "https://github.com/gpicron/nim_node_binding#68a0a6b3e8b545f442a40c716f0f8e66e520d120"
-requires "https://github.com/BundleFeed/jsony"
+requires "https://github.com/BundleFeed/jsony#head"
 requires "https://github.com/juancarlospaco/nodejs"
 
 
