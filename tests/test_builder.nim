@@ -29,6 +29,7 @@ let fixtures = parseFile("tests/spec-fixtures.json")
 type
   Fixture = object
     name: string
+    jsonHexString: string
     json: JsonNode
     binary: seq[byte]
 
@@ -39,8 +40,15 @@ proc toString(bytes: openarray[byte]): string =
   copyMem(result[0].addr, bytes[0].unsafeAddr, bytes.len)
 
 for e in fixtures.elems:
+  when defined(tinySSB):
+    if not (e{"tinySSB"}.getBool(true)):
+      continue
+  else:
+    if e{"tinySSB"}.getBool(false):
+      continue
   tests.add(Fixture(
     name: e["name"].str,
+    jsonHexString: e["json"].str,
     json: parseJson(toString(hexToSeqByte(e["json"].str))),
     binary: hexToSeqByte(e["binary"].str)
   ))
@@ -61,8 +69,11 @@ suite "BIPF":
         
         let len = encoded.len
 
+        let bb = cast[seq[byte]]((encoded.buffer))
+
         check len == fixture.binary.len              
-        check cast[seq[byte]]((encoded.buffer)) == fixture.binary
+        check bb == fixture.binary
+        check toHex(bb) == toHex(fixture.binary)
 
   test "decode fixtures":
     for fixture in tests:

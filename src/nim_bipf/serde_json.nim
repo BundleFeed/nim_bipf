@@ -231,7 +231,34 @@ template readBufferNode*(factory: DeserCtx, source: seq[byte], p: var int, l: in
 template readIntNode*(factory: DeserCtx, source: seq[byte], p: var int, l: int): JsonNode =
   block:
     var r : int32
-    littleEndian32(addr r, unsafeAddr source[p])
+    if l == 1:
+      var i = cast[cstring](unsafeAddr source[p])
+      var o = cast[cstring](addr r)
+      when system.cpuEndian == bigEndian:
+        o[3] = i[0]
+      else:
+        o[0] = i[0]
+    elif l == 2:
+      when system.cpuEndian == bigEndian:
+        var i = cast[cstring](unsafeAddr source[p])
+        var o = cast[cstring](addr r)
+        o[2] = i[0]
+        o[3] = i[1]
+      else:
+        copyMem(addr r, unsafeAddr source[p], 2)
+    elif l == 3:
+      when system.cpuEndian == bigEndian:
+        var i = cast[cstring](unsafeAddr source[p])
+        var o = cast[cstring](addr r)
+        o[1] = i[2]
+        o[2] = i[1]
+        o[3] = i[0]
+      else:
+        copyMem(addr r, unsafeAddr source[p], 3)
+    elif l == 4:
+      littleEndian32(addr r, unsafeAddr source[p])
+    else:
+      raise newException(ValueError, "Invalid int size: " & $l)
     let result = newJInt(r)
     p += l
     result

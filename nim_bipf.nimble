@@ -1,6 +1,6 @@
 # Package
 packageName   = "nim_bipf"
-version       = "0.1.2"
+version       = "0.1.3"
 author        = "Geoffrey Picron"
 description   = "BIPF encoding/decoding/transcoding"
 license       = "(MIT or Apache-2.0)"
@@ -23,6 +23,9 @@ requires "https://github.com/juancarlospaco/nodejs"
 
 task compilePureJs, "Compile to pure JS":
   exec "nim js -d:release --app:lib  --rangeChecks:off  --boundChecks:off --sinkInference:on  --out:dist/nim_bipf.js --d:nodejs --mm:orc  src/nim_bipf/js/index.nim"
+
+task compilePureJsTinySSB, "Compile to pure JS":
+  exec "nim js -d:release -d:tinySSB --app:lib  --rangeChecks:off  --boundChecks:off --sinkInference:on  --out:dist/nim_bipf.js --d:nodejs --mm:orc  src/nim_bipf/js/index.nim"
 
 task compileWasm, "Compile to Wasm Module":
   exec "nim js -d:release -o:dist/nim_bipf_wasm_wrapper.js  src/nim_bipf/js/wasm/wrapper.nim"

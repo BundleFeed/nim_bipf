@@ -111,7 +111,10 @@ template toStackValue(value: typed, StackValueImpl: typedesc[StackValue]): Stack
   elif typeof(value) is cstring:
     StackValueImpl(tag: svtCSTRING, cstr: value, encodedSize: lenUtf8(value))
   elif typeof(value) is int32:
-    StackValueImpl(tag: svtINT, i: value, encodedSize: 4)
+    when defined(tinySSB):
+      StackValueImpl(tag: svtINT, i: value, encodedSize: tinySSBEncodingSize(value))
+    else:  
+      StackValueImpl(tag: svtINT, i: value, encodedSize: 4)
   elif typeof(value) is float64:
     StackValueImpl(tag: svtDOUBLE, d: value, encodedSize: 8)
   elif value is NULLTYPE:
@@ -424,7 +427,11 @@ func finish*[Ctx: BuilderCtx, InputBuffer, OutputBuffer](b: var BipfBuilder[Ctx,
         of svtOBJECT, svtARRAY:
           discard
         of svtINT:
-          result.buffer.writeInt32LittleEndian(sv.i, p)
+          when defined(tinySSB):
+            result.buffer.writeInt32LittleEndianTrim(sv.i, p)
+          else:
+            let v = int32(sv.i)
+            result.buffer.writeInt32LittleEndian(v, p)
         of svtDOUBLE:
           result.buffer.writeFloat64LittleEndian(sv.d, p)
         of svtATOM:

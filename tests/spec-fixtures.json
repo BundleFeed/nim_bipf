@@ -2,22 +2,50 @@
     {
       "name": "num literal: 100",
       "json": "313030",
-      "binary": "2264000000"
+      "binary": "2264000000",
+      "tinySSB": false
+    },
+    {
+      "name": "num literal: 100",
+      "json": "313030",
+      "binary": "0a64",
+      "tinySSB": true
     },
     {
       "name": "num literal: 0",
       "json": "30",
-      "binary": "2200000000"
+      "binary": "2200000000",
+      "tinySSB": false
+    },
+    {
+      "name": "num literal: 0",
+      "json": "30",
+      "binary": "0a00",
+      "tinySSB": true
     },
     {
       "name": "num literal: 1",
       "json": "31",
-      "binary": "2201000000"
+      "binary": "2201000000",
+      "tinySSB": false
+    },
+    {
+      "name": "num literal: 1",
+      "json": "31",
+      "binary": "0a01",
+      "tinySSB": true
     },
     {
       "name": "num literal: -1",
       "json": "2d31",
-      "binary": "22ffffffff"
+      "binary": "22ffffffff",
+      "tinySSB": false
+    },
+    {
+      "name": "num literal: -1",
+      "json": "2d31",
+      "binary": "22ffffffff",
+      "tinySSB": true
     },
     {
       "name": "double literal: 1.234",
@@ -57,7 +85,14 @@
     {
       "name": "array of numberse 1 to 9",
       "json": "5b312c322c332c342c352c362c372c382c395d",
-      "binary": "ec02220100000022020000002203000000220400000022050000002206000000220700000022080000002209000000"
+      "binary": "ec02220100000022020000002203000000220400000022050000002206000000220700000022080000002209000000",
+      "tinySSB": false
+    },
+    {
+      "name": "array of numberse 1 to 9",
+      "json": "5b312c322c332c342c352c362c372c382c395d",
+      "binary": "94010a010a020a030a040a050a060a070a080a09",
+      "tinySSB": true
     },
     {
       "name": "string: hello",
@@ -77,7 +112,14 @@
     {
       "name": "array with various types",
       "json": "5b2d312c7b22666f6f223a747275657d2c7b2274797065223a22427566666572222c2264617461223a5b3232322c3137332c3139302c3233395d7d5d",
-      "binary": "ac0322ffffffff3518666f6f0e01bd022074797065304275666665722064617461a40122de00000022ad00000022be00000022ef000000"
+      "binary": "ac0322ffffffff3518666f6f0e01bd022074797065304275666665722064617461a40122de00000022ad00000022be00000022ef000000",
+      "tinySSB": false
+    },
+    {
+      "name": "array with various types",
+      "json": "5b2d312c7b22666f6f223a747275657d2c7b2274797065223a22427566666572222c2264617461223a5b3232322c3137332c3139302c3233395d7d5d",
+      "binary": "c40222ffffffff3518666f6f0e01d5012074797065304275666665722064617461440ade0aad0abe0aef",
+      "tinySSB": true
     },
     {
       "name": "package.json",

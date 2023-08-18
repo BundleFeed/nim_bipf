@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: (MIT or Apache-2.0)
 
 import std/tables
+import std/bitops
 import private/varint
 
 
@@ -82,6 +83,16 @@ template encodingSize*(v: AtomValue): int =
     3
   else:
     4
+
+template tinySSBEncodingSize*(v: int32): int =
+  # little endian, two's complement, minimal number of bytes
+  block :  
+    const intSize = sizeof(v) * 8
+
+    let significantBitPos = intSize - countLeadingZeroBits(v)
+    let size = (significantBitPos + 7) div 8
+
+    size
 
 
 # AtomDictionary helpers

@@ -5,6 +5,7 @@ when defined(js):
   {.fatal: "This module is not designed to be used with the JavaScript backend.".}
 
 import std/endians
+import ../../common
 
 template lenUTF8*(s: cstring): int = s.len
 
@@ -51,6 +52,15 @@ template copyBuffer*(result: var ByteBuffer, s: ByteBuffer, p: var int) =
 template writeInt32LittleEndian*(result: ByteBuffer, i: int32, p: var int) =
   littleEndian32(cast[ptr uint32](string(result)[p].addr), unsafeAddr i)
   p+=4
+
+func writeInt32LittleEndianTrim*(result: var ByteBuffer, i: int32, p: var int) =
+  let v = i
+  let size = tinySSBEncodingSize(i)
+
+  for i in 0..(size-1):
+    result[p+i] = byte(v shr (i*8))
+
+  p+=size    
 
 func writeUInt32LittleEndianTrim*(result: var ByteBuffer, i: uint32, p: var int) =
   var v = i

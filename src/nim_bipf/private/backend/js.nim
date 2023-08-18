@@ -36,6 +36,16 @@ template writeInt32LittleEndian*(result: NodeJsBuffer, i: int32, p: var int) =
   result.writeInt32LE(i, p)
   p+=4
 
+func writeInt32LittleEndianTrim*(result: var NodeJsBuffer, i: int32, p: var int) =
+  let v = i
+  let size = tinySSBEncodingSize(i)
+
+  for i in 0..(size-1):
+    result[p+i] = byte(v shr (i*8))
+
+  p+=size    
+
+
 func writeUInt32LittleEndianTrim*(result: var NodeJsBuffer, i: uint32, p: var int) =
   var v = i
   if i <= 255:
